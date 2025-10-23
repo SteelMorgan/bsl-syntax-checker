@@ -8,6 +8,14 @@ spring:
     name: mcp-bsl-server
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  # CORS configuration
+  web:
+    cors:
+      allowed-origins: "*"
+      allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+      allowed-headers: "*"
+      allow-credentials: true
+      max-age: 3600
 
 # Logging configuration
 logging:

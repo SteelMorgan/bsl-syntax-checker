@@ -98,11 +98,13 @@
 
 ### To-dos
 
-- [ ] Инициализировать Spring-проект и базовые конфиги (Actuator, Swagger, logging toggle)
-- [ ] Реализовать адаптер BSL LS: пул сессий, CLI analyze/format, JVM flags
-- [ ] Реализовать stdio, HTTP REST, SSE, NDJSON роуты/диспетчер
-- [ ] Добавить валидацию и трансляцию путей хоста → контейнера
-- [ ] Добавить OpenAPI схемы и Swagger UI
-- [ ] Подключить Logback Loki appender и прокси Grafana UI
-- [ ] Страница статуса сервера и health endpoints
+- [x] Инициализировать Spring-проект и базовые конфиги (Actuator, Swagger, logging toggle)
+- [x] Реализовать адаптер BSL LS: пул сессий, CLI analyze/format, JVM flags
+- [x] Реализовать stdio, HTTP REST, SSE, NDJSON роуты/диспетчер
+- [x] Добавить валидацию и трансляцию путей хоста → контейнера
+- [x] Добавить OpenAPI схемы и Swagger UI
+- [x] Подключить Logback Loki appender
+- [x] Страница статуса сервера и health endpoints
+- [x] Реализовать CORS конфигурацию для Swagger UI
+- [x] Реализовать BSL LS parsing вместо mock данных
 

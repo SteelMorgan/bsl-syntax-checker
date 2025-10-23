@@ -13,7 +13,8 @@ private val logger = KotlinLogging.logger {}
  */
 @Service
 class BslCliService(
-    private val properties: BslServerProperties
+    private val properties: BslServerProperties,
+    private val outputParser: BslOutputParser
 ) {
 
     /**
@@ -48,7 +49,7 @@ class BslCliService(
 
             if (result.isSuccess) {
                 logger.info { "Analysis completed successfully" }
-                AnalyzeResult.success(parseAnalysisOutput(result.output))
+                AnalyzeResult.success(outputParser.parseAnalysisOutput(result.output))
             } else {
                 logger.error { "Analysis failed: ${result.output}" }
                 AnalyzeResult.failure(result.output)
@@ -78,7 +79,7 @@ class BslCliService(
 
             if (result.isSuccess) {
                 logger.info { "Format completed successfully" }
-                FormatResult.success(parseFormatOutput(result.output))
+                FormatResult.success(outputParser.parseFormatOutput(result.output))
             } else {
                 logger.error { "Format failed: ${result.output}" }
                 FormatResult.failure(result.output)
@@ -109,26 +110,6 @@ class BslCliService(
         return """{"language":"$language"}"""
     }
 
-    private fun parseAnalysisOutput(output: String): Map<String, Any> {
-        // TODO: Parse actual JSON output from BSL LS
-        return mapOf(
-            "summary" to mapOf(
-                "errors" to 0,
-                "warnings" to 0
-            ),
-            "diagnostics" to emptyList<Map<String, Any>>(),
-            "rawOutput" to output
-        )
-    }
-
-    private fun parseFormatOutput(output: String): Map<String, Any> {
-        // TODO: Parse format results
-        return mapOf(
-            "formatted" to true,
-            "filesChanged" to 0,
-            "rawOutput" to output
-        )
-    }
 }
 
 sealed class AnalyzeResult {

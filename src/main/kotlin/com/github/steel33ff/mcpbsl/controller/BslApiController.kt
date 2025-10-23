@@ -40,12 +40,26 @@ class BslApiController(
             when (result) {
                 is AnalyzeResult.Success -> {
                     val data = result.data
+                    val summaryData = data["summary"] as? Map<*, *>
+                    val diagnosticsData = data["diagnostics"] as? List<*>
+                    
                     val response = AnalyzeResponse(
                         summary = AnalyzeSummary(
-                            errors = (data["summary"] as? Map<*, *>)?.get("errors") as? Int ?: 0,
-                            warnings = (data["summary"] as? Map<*, *>)?.get("warnings") as? Int ?: 0
+                            errors = summaryData?.get("errors") as? Int ?: 0,
+                            warnings = summaryData?.get("warnings") as? Int ?: 0
                         ),
-                        diagnostics = emptyList() // TODO: parse from BSL LS output
+                        diagnostics = diagnosticsData?.mapNotNull { diagnostic ->
+                            val diag = diagnostic as? Map<*, *>
+                            if (diag != null) {
+                                Diagnostic(
+                                    file = diag["file"] as? String ?: "",
+                                    line = diag["line"] as? Int ?: 0,
+                                    code = diag["code"] as? String ?: "",
+                                    severity = diag["severity"] as? String ?: "info",
+                                    message = diag["message"] as? String ?: ""
+                                )
+                            } else null
+                        } ?: emptyList()
                     )
                     ResponseEntity.ok(response)
                 }
