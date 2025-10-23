@@ -1,0 +1,146 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
+  "_comment": "MCP BSL Server Configuration Examples - ALWAYS runs in Docker",
+  "_usage": [
+    "1. Build Docker image: docker build -t mcp-bsl-server:latest .",
+    "2. Copy this config to: %APPDATA%\\Cursor\\User\\globalStorage\\saoudrizwan.claude-dev\\settings\\cline_mcp_settings.json",
+    "3. Update volume path: D:\\My Projects\\Projects 1C",
+    "4. Enable one config by setting 'disabled: false'",
+    "5. Restart Cursor IDE",
+    "6. Web UI always available at http://localhost:9090 (Swagger, logs, metrics)"
+  ],
+  "_architecture": {
+    "deployment": "Docker container (MANDATORY - isolation, security, BSL LS included)",
+    "mcp_transports": {
+      "stdio": "For Cursor IDE - JSON-RPC over stdin/stdout",
+      "http": "For external integrations - REST API",
+      "sse": "For streaming - Server-Sent Events (planned)",
+      "ndjson": "For chunked - Newline-Delimited JSON (planned)"
+    },
+    "web_ui": "Always available on port 9090 (Swagger UI, logs via Grafana, metrics via Prometheus)"
+  },
+  "mcpServers": {
+    "bsl-mcp-stdio": {
+      "description": "🎯 MCP stdio mode for Cursor IDE (uses running container 'mcp-bsl-server-checker')",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "mcp-bsl-server-checker",
+        "java",
+        "-jar",
+        "/app/app.jar"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "LOGGING_ENABLED": "false"
+      },
+      "disabled": false,
+      "alwaysAllow": [],
+      "_note": "Container 'mcp-bsl-server-checker' must be running first (see README.md)",
+      "_web_ui": "http://localhost:9090 (from running container)"
+    },
+    "bsl-mcp-http": {
+      "description": "🌐 MCP HTTP mode for external integrations (Web UI: http://localhost:9090)",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-d",
+        "-p",
+        "8080:8080",
+        "-p",
+        "9090:9090",
+        "-v",
+        "D:\\My Projects\\Projects 1C:/workspaces:ro",
+        "--name",
+        "mcp-bsl-server-checker",
+        "mcp-bsl-server:latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "http",
+        "MCP_PORT": "8080",
+        "WEB_UI_PORT": "9090",
+        "LOGGING_ENABLED": "true"
+      },
+      "disabled": true,
+      "alwaysAllow": [],
+      "_mcp_api": "http://localhost:8080/api/*",
+      "_web_ui": "Swagger: http://localhost:9090/swagger-ui"
+    },
+    "bsl-mcp-sse": {
+      "description": "📡 MCP SSE mode for streaming (PLANNED - Web UI: http://localhost:9090)",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-d",
+        "-p",
+        "8080:8080",
+        "-p",
+        "9090:9090",
+        "-v",
+        "D:\\My Projects\\Projects 1C:/workspaces:ro",
+        "--name",
+        "mcp-bsl-server-checker",
+        "mcp-bsl-server:latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "sse",
+        "MCP_PORT": "8080",
+        "WEB_UI_PORT": "9090",
+        "LOGGING_ENABLED": "true"
+      },
+      "disabled": true,
+      "alwaysAllow": [],
+      "_note": "SSE transport coming in v0.2.0",
+      "_web_ui": "Swagger: http://localhost:9090/swagger-ui"
+    },
+    "bsl-mcp-ndjson": {
+      "description": "📦 MCP NDJSON mode for chunked (PLANNED - Web UI: http://localhost:9090)",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-d",
+        "-p",
+        "8080:8080",
+        "-p",
+        "9090:9090",
+        "-v",
+        "D:\\My Projects\\Projects 1C:/workspaces:ro",
+        "--name",
+        "mcp-bsl-server-checker",
+        "mcp-bsl-server:latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "ndjson",
+        "MCP_PORT": "8080",
+        "WEB_UI_PORT": "9090",
+        "LOGGING_ENABLED": "true"
+      },
+      "disabled": true,
+      "alwaysAllow": [],
+      "_note": "NDJSON transport coming in v0.2.0",
+      "_web_ui": "Swagger: http://localhost:9090/swagger-ui"
+    },
+    "bsl-mcp-full-stack": {
+      "description": "🚀 Full stack with Grafana + Prometheus (Web UI: http://localhost:9090, Grafana: http://localhost:3000)",
+      "command": "docker-compose",
+      "args": [
+        "up",
+        "-d"
+      ],
+      "env": {},
+      "disabled": true,
+      "alwaysAllow": [],
+      "_services": "MCP Server + Loki + Grafana + Prometheus",
+      "_web_ui": {
+        "swagger": "http://localhost:9090/swagger-ui",
+        "grafana": "http://localhost:3000 (admin/admin)",
+        "prometheus": "http://localhost:9090/prometheus"
+      }
+    }
+  }
+}
+

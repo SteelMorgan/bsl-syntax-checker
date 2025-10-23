@@ -1,0 +1,27 @@
+server:
+  port: 0
+
+logging:
+  loki:
+    enabled: false
+  level:
+    root: WARN
+    com.github.steel33ff.mcpbsl: INFO
+
+mcp:
+  transport: stdio
+  port: 8080
+
+bsl:
+  jar-path: /tmp/bsl-language-server.jar
+  pool:
+    max-size: 2
+    ttl-minutes: 5
+  jvm:
+    max-heap: 2g
+
+path:
+  mount:
+    host-root: ""
+    container-root: /workspaces
+

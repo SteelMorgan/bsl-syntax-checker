@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mcp-bsl-server:
+    build:
+      context: .
+      args:
+        BSL_VERSION: latest
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}  # Optional: leave empty if not set
+    container_name: mcp-bsl-server-checker
+    ports:
+      - "9090:9090"  # Web UI (ALWAYS active)
+      - "${MCP_PORT:-8080}:8080"  # MCP port (for http/sse/ndjson modes)
+    environment:
+      - WEB_UI_PORT=9090
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-http}
+      - MCP_PORT=8080
+      - LOGGING_ENABLED=${LOGGING_ENABLED:-true}
+      - MOUNT_HOST_ROOT=${MOUNT_HOST_ROOT:-}
+      - BSL_MAX_HEAP=${BSL_MAX_HEAP:-4g}
+      - BSL_POOL_MAX_SIZE=${BSL_POOL_MAX_SIZE:-5}
+      - BSL_POOL_TTL=${BSL_POOL_TTL:-60}
+      - logging.loki.url=http://loki:3100/loki/api/v1/push
+    volumes:
+      - "${MOUNT_HOST_ROOT:-./testdata}:/workspaces:ro"
+    depends_on:
+      - loki
+    networks:
+      - mcp-network
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: mcp-bsl-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - mcp-network
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: mcp-bsl-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+    depends_on:
+      - loki
+    networks:
+      - mcp-network
+
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: mcp-bsl-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  grafana-data:
+  prometheus-data:
+

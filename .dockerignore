@@ -1,0 +1,48 @@
+# Gradle
+.gradle/
+build/
+!build/libs/*.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Secrets
+.secrets/
+secrets/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test reports
+build/reports/
+build/test-results/
+
+# Monitoring (not needed in image)
+prometheus/
+grafana/
+loki/
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
