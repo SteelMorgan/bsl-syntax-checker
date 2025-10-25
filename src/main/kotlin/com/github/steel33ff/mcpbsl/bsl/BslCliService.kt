@@ -19,6 +19,8 @@ class BslCliService(
 
     /**
      * Run analysis on source file or directory
+     * Note: BSL Language Server works with directories only.
+     * If a file path is provided, the parent directory will be analyzed.
      */
     fun analyze(
         srcPath: Path,
@@ -33,32 +35,24 @@ class BslCliService(
             "--configuration", createConfigJson(language)
         )
 
-        // Determine if srcPath is a file or directory and use appropriate parameter
-        if (srcPath.toFile().isFile) {
-            args.add("--src")
-            args.add(srcPath.toString())
+        // BSL Language Server only supports --srcDir (directory), not --src (file)
+        // For files, we need to pass the parent directory
+        val sourceDir = if (srcPath.toFile().isFile) {
+            srcPath.parent
         } else {
-            args.add("--srcDir")
-            args.add(srcPath.toString())
+            srcPath
         }
+        args.add("--srcDir")
+        args.add(sourceDir.toString())
 
         reporters.forEach { reporter ->
             args.add("--reporter")
             args.add(reporter)
         }
 
-        outputDir?.let {
-            args.add("--outputDir")
-            args.add(it.toString())
-        }
-
         return try {
-            // Use parent directory as working directory if srcPath is a file
-            val workDir = if (srcPath.toFile().isFile) {
-                srcPath.parent
-            } else {
-                srcPath
-            }
+            // Use the source directory as working directory
+            val workDir = sourceDir
             
             // Always specify output directory to avoid writing to read-only /workspaces
             val tempOutputDir = outputDir ?: Path("/tmp/bsl-reports")

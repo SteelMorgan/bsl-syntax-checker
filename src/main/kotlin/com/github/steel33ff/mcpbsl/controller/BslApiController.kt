@@ -30,7 +30,10 @@ class BslApiController(
     @PostMapping("/analyze")
     @Operation(
         summary = "Analyze BSL source code",
-        description = "Run BSL Language Server analysis on source file or directory. Returns diagnostics found."
+        description = "Run BSL Language Server analysis on source file or directory. " +
+                     "Note: BSL Language Server works with directories only. " +
+                     "If a file path is provided, the parent directory will be analyzed. " +
+                     "Returns diagnostics found."
     )
     fun analyze(@RequestBody request: AnalyzeRequest): ResponseEntity<Any> {
         logger.info { "Received analyze request for path: ${request.srcDir}" }

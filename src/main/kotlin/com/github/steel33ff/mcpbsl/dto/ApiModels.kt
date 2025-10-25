@@ -5,9 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 /**
  * Request to analyze BSL code
  */
-@Schema(description = "Analyze BSL source code request")
+@Schema(description = "Analyze BSL source code request. Note: BSL Language Server works with directories only. If a file path is provided, the parent directory will be analyzed.")
 data class AnalyzeRequest(
-    @Schema(description = "Host absolute path to source file or directory", example = "D:\\Projects\\MyProject\\Module.bsl")
+    @Schema(description = "Host absolute path to source file or directory. For files, the parent directory will be analyzed.", example = "D:\\Projects\\MyProject\\Module.bsl")
     val srcDir: String,
 
     @Schema(description = "List of reporters", example = "[\"json\"]", defaultValue = "[\"json\"]")

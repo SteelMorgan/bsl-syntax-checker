@@ -13,9 +13,8 @@
 ### 1. Обновлен BslCliService
 - Метод `analyze()` теперь принимает `srcPath: Path` вместо `srcDir: Path`
 - Автоматическое определение типа пути (файл/директория)
-- Использование соответствующих параметров BSL Language Server:
-  - `--src` для файлов
-  - `--srcDir` для директорий
+- **Важно**: BSL Language Server работает только с директориями
+- Для файлов используется родительская директория с параметром `--srcDir`
 
 ### 2. Создан PathTypeService
 - Определение типов путей (BSL_FILE, BSL_DIRECTORY, FILE, DIRECTORY, NOT_FOUND, UNKNOWN)
