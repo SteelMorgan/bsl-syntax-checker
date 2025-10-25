@@ -80,13 +80,37 @@ class PathMappingService(
     }
 
     /**
-     * Validate that path is accessible
+     * Validate that path is accessible (file or directory)
      */
     fun validatePath(path: Path): Boolean {
         return try {
-            path.isDirectory()
+            path.exists() && (path.isDirectory() || path.isRegularFile())
         } catch (e: Exception) {
             logger.warn(e) { "Path validation failed: $path" }
+            false
+        }
+    }
+
+    /**
+     * Check if path is a file
+     */
+    fun isFile(path: Path): Boolean {
+        return try {
+            path.isRegularFile()
+        } catch (e: Exception) {
+            logger.warn(e) { "File check failed: $path" }
+            false
+        }
+    }
+
+    /**
+     * Check if path is a directory
+     */
+    fun isDirectory(path: Path): Boolean {
+        return try {
+            path.isDirectory()
+        } catch (e: Exception) {
+            logger.warn(e) { "Directory check failed: $path" }
             false
         }
     }

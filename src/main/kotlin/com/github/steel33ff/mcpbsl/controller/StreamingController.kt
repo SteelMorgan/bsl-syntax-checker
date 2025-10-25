@@ -48,7 +48,7 @@ class StreamingController(
 
                 // Run analysis
                 val result = bslCliService.analyze(
-                    srcDir = containerPath,
+                    srcPath = containerPath,
                     reporters = request.reporters,
                     language = request.language
                 )
@@ -125,7 +125,7 @@ class StreamingController(
 
                 // Run analysis
                 val result = bslCliService.analyze(
-                    srcDir = containerPath,
+                    srcPath = containerPath,
                     reporters = request.reporters,
                     language = request.language
                 )

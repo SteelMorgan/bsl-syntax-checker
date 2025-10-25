@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @Schema(description = "Analyze BSL source code request")
 data class AnalyzeRequest(
-    @Schema(description = "Host absolute path to source directory", example = "D:\\Projects\\MyProject")
+    @Schema(description = "Host absolute path to source file or directory", example = "D:\\Projects\\MyProject\\Module.bsl")
     val srcDir: String,
 
     @Schema(description = "List of reporters", example = "[\"json\"]", defaultValue = "[\"json\"]")
@@ -123,6 +123,30 @@ data class SessionStatusResponse(
 data class SessionStopResponse(
     @Schema(description = "Session was stopped successfully")
     val stopped: Boolean
+)
+
+/**
+ * Path information response
+ */
+@Schema(description = "Path information")
+data class PathInfoResponse(
+    @Schema(description = "Path type", example = "BSL_FILE", allowableValues = ["BSL_FILE", "BSL_DIRECTORY", "FILE", "DIRECTORY", "NOT_FOUND", "UNKNOWN"])
+    val type: String,
+
+    @Schema(description = "Path exists")
+    val exists: Boolean,
+
+    @Schema(description = "Is BSL file or directory")
+    val isBsl: Boolean,
+
+    @Schema(description = "File size in bytes (for files)")
+    val sizeBytes: Long? = null,
+
+    @Schema(description = "Number of BSL files (for directories)")
+    val bslFileCount: Int? = null,
+
+    @Schema(description = "Container path")
+    val containerPath: String
 )
 
 /**

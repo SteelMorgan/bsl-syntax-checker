@@ -18,21 +18,29 @@ class BslCliService(
 ) {
 
     /**
-     * Run analysis on source directory
+     * Run analysis on source file or directory
      */
     fun analyze(
-        srcDir: Path,
+        srcPath: Path,
         reporters: List<String> = listOf("json"),
         language: String = "ru",
         outputDir: Path? = null
     ): AnalyzeResult {
-        logger.info { "Running BSL analysis: srcDir=$srcDir, reporters=$reporters, language=$language" }
+        logger.info { "Running BSL analysis: srcPath=$srcPath, reporters=$reporters, language=$language" }
 
         val args = mutableListOf(
             "--analyze",
-            "--srcDir", srcDir.toString(),
             "--configuration", createConfigJson(language)
         )
+
+        // Determine if srcPath is a file or directory and use appropriate parameter
+        if (srcPath.toFile().isFile) {
+            args.add("--src")
+            args.add(srcPath.toString())
+        } else {
+            args.add("--srcDir")
+            args.add(srcPath.toString())
+        }
 
         reporters.forEach { reporter ->
             args.add("--reporter")
@@ -45,11 +53,11 @@ class BslCliService(
         }
 
         return try {
-            // Use parent directory as working directory if srcDir is a file
-            val workDir = if (srcDir.toFile().isFile) {
-                srcDir.parent
+            // Use parent directory as working directory if srcPath is a file
+            val workDir = if (srcPath.toFile().isFile) {
+                srcPath.parent
             } else {
-                srcDir
+                srcPath
             }
             
             // Always specify output directory to avoid writing to read-only /workspaces
