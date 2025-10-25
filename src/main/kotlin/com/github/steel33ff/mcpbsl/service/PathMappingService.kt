@@ -27,11 +27,21 @@ class PathMappingService(
             )
         }
 
-        val normalizedHostPath = Path(hostPath).normalize()
-        val normalizedHostRoot = Path(properties.hostRoot).normalize()
+        // Normalize Windows paths by converting backslashes to forward slashes
+        val normalizedHostPathStr = hostPath.replace("\\", "/")
+        val normalizedHostRootStr = properties.hostRoot.replace("\\", "/")
+        
+        logger.debug { "Input host path: '$hostPath'" }
+        logger.debug { "Normalized host path: '$normalizedHostPathStr'" }
+        logger.debug { "Host root: '${properties.hostRoot}'" }
+        logger.debug { "Normalized host root: '$normalizedHostRootStr'" }
+
+        val normalizedHostPath = Path(normalizedHostPathStr).normalize()
+        val normalizedHostRoot = Path(normalizedHostRootStr).normalize()
 
         // Security check: path must be under host root
         if (!normalizedHostPath.startsWith(normalizedHostRoot)) {
+            logger.error { "Path validation failed: '$normalizedHostPath' does not start with '$normalizedHostRoot'" }
             throw PathMappingException(
                 "Path '$hostPath' is outside allowed root '${properties.hostRoot}'"
             )

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
+  "_comment": "🎯 MCP BSL Server Configuration for Cursor IDE - ИСПРАВЛЕННАЯ ВЕРСИЯ",
+  "_version": "v0.1.0-fixed",
+  "_status": "✅ Все MCP методы работают корректно",
+  "_fixes": [
+    "✅ Исправлен парсинг поля 'method' вместо 'tool'",
+    "✅ Добавлены стандартные MCP методы: initialize, tools/list, tools/call",
+    "✅ Правильная JSON-RPC 2.0 обертка для всех ответов",
+    "✅ Cursor IDE теперь видит список tools",
+    "✅ Запросы analyze работают без ошибок"
+  ],
+  "_usage": [
+    "1. Убедитесь, что Docker образ собран: docker build -t mcp-bsl-server:latest .",
+    "2. Скопируйте этот файл в: %APPDATA%\\Cursor\\User\\globalStorage\\saoudrizwan.claude-dev\\settings\\cline_mcp_settings.json",
+    "3. Обновите путь к проектам: D:\\My Projects\\Projects 1C",
+    "4. Включите нужную конфигурацию (disabled: false)",
+    "5. Перезапустите Cursor IDE",
+    "6. Web UI доступен на http://localhost:9090"
+  ],
+  "_architecture": {
+    "deployment": "Docker контейнер (обязательно - изоляция, безопасность, BSL LS включен)",
+    "mcp_transports": {
+      "stdio": "Для Cursor IDE - JSON-RPC через stdin/stdout",
+      "http": "Для внешних интеграций - REST API"
+    },
+    "web_ui": "Всегда доступен на порту 9090 (Swagger UI, логи, метрики)"
+  },
+  "mcpServers": {
+    "bsl-mcp-stdio": {
+      "description": "🎯 MCP stdio режим для Cursor IDE (использует запущенный контейнер)",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "mcp-bsl-server-checker",
+        "java",
+        "-jar",
+        "/app/app.jar"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "LOGGING_ENABLED": "false"
+      },
+      "disabled": false,
+      "alwaysAllow": [
+        "bslcheck_analyze",
+        "bslcheck_format", 
+        "bslcheck_session_start",
+        "bslcheck_session_status",
+        "bslcheck_session_stop"
+      ],
+      "_prerequisites": [
+        "Контейнер 'mcp-bsl-server-checker' должен быть запущен",
+        "Команда запуска: docker run --rm -d --name mcp-bsl-server-checker -e MCP_TRANSPORT=http -e MOUNT_HOST_ROOT=\"D:\\My Projects\\Projects 1C\" -p 9090:9090 -p 8080:8080 -v \"D:\\My Projects\\Projects 1C:/workspaces:ro\" mcp-bsl-server:latest"
+      ],
+      "_web_ui": "http://localhost:9090",
+      "_tools": [
+        "bslcheck_analyze - анализ кода 1C на ошибки и предупреждения",
+        "bslcheck_format - форматирование кода 1C",
+        "bslcheck_session_start - запуск сессии BSL Language Server",
+        "bslcheck_session_status - получение статуса сессии",
+        "bslcheck_session_stop - остановка сессии"
+      ]
+    },
+    "bsl-mcp-http": {
+      "description": "🌐 MCP HTTP режим для внешних интеграций",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-d",
+        "-p",
+        "9090:9090",
+        "-p", 
+        "8080:8080",
+        "-v",
+        "D:\\My Projects\\Projects 1C:/workspaces:ro",
+        "--name",
+        "mcp-bsl-server-checker",
+        "mcp-bsl-server:latest"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "http",
+        "MCP_PORT": "8080",
+        "WEB_UI_PORT": "9090",
+        "MOUNT_HOST_ROOT": "D:\\My Projects\\Projects 1C",
+        "LOGGING_ENABLED": "true"
+      },
+      "disabled": true,
+      "alwaysAllow": [],
+      "_mcp_endpoint": "http://localhost:9090/mcp",
+      "_web_ui": "http://localhost:9090",
+      "_swagger": "http://localhost:9090/swagger-ui",
+      "_note": "HTTP режим для тестирования и внешних интеграций"
+    },
+    "bsl-mcp-full-stack": {
+      "description": "🚀 Полный стек с мониторингом (Grafana + Prometheus)",
+      "command": "docker-compose",
+      "args": [
+        "up",
+        "-d"
+      ],
+      "env": {},
+      "disabled": true,
+      "alwaysAllow": [],
+      "_services": "MCP Server + Loki + Grafana + Prometheus",
+      "_urls": {
+        "mcp_server": "http://localhost:9090",
+        "swagger": "http://localhost:9090/swagger-ui",
+        "grafana": "http://localhost:3000 (admin/admin)",
+        "prometheus": "http://localhost:9090/prometheus"
+      },
+      "_note": "Для продакшн использования с полным мониторингом"
+    }
+  },
+  "_testing": {
+    "manual_tests": [
+      "1. MCP Initialize: curl -X POST http://localhost:9090/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{\"tools\":{}}}}'",
+      "2. MCP Tools List: curl -X POST http://localhost:9090/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\",\"params\":{}}'",
+      "3. MCP Tools Call: curl -X POST http://localhost:9090/mcp -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"bslcheck_analyze\",\"arguments\":{\"srcDir\":\"/workspaces\",\"reporters\":[\"json\"],\"language\":\"ru\"}}}'"
+    ],
+    "expected_results": {
+      "initialize": "Status 200, serverInfo with name and version",
+      "tools_list": "Status 200, 5 tools available",
+      "tools_call": "Status 200, content with analysis results"
+    }
+  },
+  "_troubleshooting": {
+    "cursor_not_seeing_tools": [
+      "1. Проверьте, что контейнер запущен: docker ps --filter name=mcp-bsl-server-checker",
+      "2. Проверьте логи: docker logs mcp-bsl-server-checker",
+      "3. Перезапустите Cursor IDE",
+      "4. Проверьте конфигурацию MCP в Cursor"
+    ],
+    "analyze_request_fails": [
+      "1. Проверьте, что путь к проектам правильный в volume mapping",
+      "2. Убедитесь, что BSL Language Server доступен в контейнере",
+      "3. Проверьте права доступа к файлам проекта"
+    ],
+    "web_ui_not_accessible": [
+      "1. Проверьте, что порт 9090 не занят",
+      "2. Убедитесь, что контейнер запущен с правильными портами",
+      "3. Проверьте firewall настройки"
+    ]
+  }
+}

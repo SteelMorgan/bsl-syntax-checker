@@ -57,8 +57,12 @@ springdoc:
 
 # MCP Transport configuration
 mcp:
-  transport: ${MCP_TRANSPORT:stdio}  # Options: stdio, http, sse, ndjson
+  transport: ${MCP_TRANSPORT:http}   # Options: stdio, http, sse, ndjson
   port: ${MCP_PORT:8080}             # Only for http/sse/ndjson modes
+
+# Conditional transport activation
+transport:
+  mode: ${MCP_TRANSPORT:http}
   
 # BSL Language Server configuration
 bsl:

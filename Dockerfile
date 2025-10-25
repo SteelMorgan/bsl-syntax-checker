@@ -39,12 +39,15 @@ RUN mkdir -p /opt/bsl && \
 # Copy application JAR
 COPY build/libs/*.jar app.jar
 
+# Create temporary directory for BSL reports
+RUN mkdir -p /tmp/bsl-reports
+
 # Volumes
 VOLUME ["/workspaces"]
 
 # Environment variables
 ENV WEB_UI_PORT=9090
-ENV MCP_TRANSPORT=stdio
+ENV MCP_TRANSPORT=http
 ENV MCP_PORT=8080
 ENV LOGGING_ENABLED=true
 ENV BSL_JAR_PATH=/opt/bsl/bsl-language-server.jar

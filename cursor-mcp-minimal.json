@@ -1,0 +1,20 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
+  "mcpServers": {
+    "bsl-mcp": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "mcp-bsl-server-checker",
+        "java",
+        "-jar",
+        "/app/app.jar"
+      ],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "MOUNT_HOST_ROOT": "D:\\My Projects\\Projects 1C"
+      }
+    }
+  }
+}

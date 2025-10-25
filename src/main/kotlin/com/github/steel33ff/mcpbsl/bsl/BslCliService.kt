@@ -45,7 +45,19 @@ class BslCliService(
         }
 
         return try {
-            val result = executeCliCommand(srcDir, *args.toTypedArray())
+            // Use parent directory as working directory if srcDir is a file
+            val workDir = if (srcDir.toFile().isFile) {
+                srcDir.parent
+            } else {
+                srcDir
+            }
+            
+            // Always specify output directory to avoid writing to read-only /workspaces
+            val tempOutputDir = outputDir ?: Path("/tmp/bsl-reports")
+            args.add("--outputDir")
+            args.add(tempOutputDir.toString())
+            
+            val result = executeCliCommand(workDir, *args.toTypedArray())
 
             if (result.isSuccess) {
                 logger.info { "Analysis completed successfully" }

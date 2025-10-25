@@ -1,7 +1,6 @@
 package com.github.steel33ff.mcpbsl.transport
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.steel33ff.mcpbsl.bsl.AnalyzeResult
 import com.github.steel33ff.mcpbsl.bsl.BslCliService
 import com.github.steel33ff.mcpbsl.bsl.BslSessionPool
@@ -9,81 +8,79 @@ import com.github.steel33ff.mcpbsl.bsl.FormatResult
 import com.github.steel33ff.mcpbsl.service.PathMappingService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.stereotype.Component
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import org.springframework.web.bind.annotation.*
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * MCP stdio transport implementation
- * 
- * Reads JSON requests from stdin, processes them, and writes JSON responses to stdout.
- * Activated when running with --stdio or when TRANSPORT_MODE=stdio
+ * HTTP REST API transport for MCP
  */
-@Component
-// @ConditionalOnProperty(name = ["mcp.transport"], havingValue = "stdio", matchIfMissing = true)
-class StdioTransport(
+@RestController
+@RequestMapping("/mcp")
+// @ConditionalOnProperty(name = ["mcp.transport"], havingValue = "http", matchIfMissing = false)
+class HttpTransport(
     private val bslCliService: BslCliService,
     private val sessionPool: BslSessionPool,
     private val pathMappingService: PathMappingService,
-    @Value("\${mcp.transport:stdio}") private val transportMode: String
-) : CommandLineRunner {
+    @Value("\${mcp.transport:http}") private val transportMode: String
+) {
 
     private val objectMapper = jacksonObjectMapper()
 
-    override fun run(vararg args: String) {
-        logger.info { "StdioTransport initialized and active - transport mode: $transportMode" }
-        logger.info { "Starting MCP stdio transport mode" }
-
-        val reader = BufferedReader(InputStreamReader(System.`in`))
-
-        try {
-            reader.useLines { lines ->
-                lines.forEach { line ->
-                    if (line.isNotBlank()) {
-                        processRequest(line)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Stdio transport error" }
-            writeError("Transport error: ${e.message}")
-        }
-
-        logger.info { "Stdio transport shutting down" }
+    init {
+        logger.info { "HttpTransport initialized and active - transport mode: $transportMode" }
     }
 
-    private fun processRequest(jsonLine: String) {
-        try {
-            val request = objectMapper.readValue<Map<String, Any>>(jsonLine)
-            val method = request["method"] as? String ?: run {
-                writeJsonRpcError(request["id"], -32600, "Invalid Request", "Missing 'method' field")
-                return
-            }
-            val id = request["id"]
-            val params = request["params"] as? Map<String, Any> ?: emptyMap()
+    @PostMapping
+    fun handleMcpRequest(@RequestBody request: Map<String, Any>): Map<String, Any> {
+        val method = request["method"] as? String ?: return mapOf("error" to "Missing 'method' field")
+        val id = request["id"] ?: ""
+        val params = request["params"] as? Map<String, Any> ?: emptyMap()
 
-            logger.debug { "Processing MCP method: $method" }
+        logger.info { "Processing MCP HTTP method: $method" }
 
-            val response = when (method) {
+        return try {
+            val result = when (method) {
                 "initialize" -> handleInitialize(id, params)
                 "tools/list" -> handleToolsList(id, params)
                 "tools/call" -> handleToolsCall(id, params)
                 else -> {
                     logger.warn { "Unknown MCP method: $method" }
-                    writeJsonRpcError(id, -32601, "Method Not Found", "Unknown method: $method")
-                    return
+                    return mapOf(
+                        "jsonrpc" to "2.0",
+                        "id" to id,
+                        "error" to mapOf(
+                            "code" to -32601,
+                            "message" to "Method Not Found",
+                            "data" to "Unknown method: $method"
+                        )
+                    )
                 }
             }
 
-            writeJsonRpcResponse(id, response)
+            mapOf(
+                "jsonrpc" to "2.0",
+                "id" to id,
+                "result" to result
+            )
         } catch (e: Exception) {
-            logger.error(e) { "Error processing request: $jsonLine" }
-            writeJsonRpcError(null, -32603, "Internal Error", "Request processing error: ${e.message}")
+            logger.error(e) { "Error processing MCP method: $method" }
+            mapOf(
+                "jsonrpc" to "2.0",
+                "id" to id,
+                "error" to mapOf(
+                    "code" to -32603,
+                    "message" to "Internal Error",
+                    "data" to (e.message ?: "Internal server error")
+                )
+            )
         }
+    }
+
+    @GetMapping("/health")
+    fun health(): Map<String, String> {
+        return mapOf("status" to "UP", "transport" to "http")
     }
 
     private fun handleAnalyze(params: Map<String, Any>): Map<String, Any> {
@@ -454,42 +451,4 @@ class StdioTransport(
             else -> mapOf("error" to "Unknown tool: $toolName")
         }
     }
-
-    private fun writeJsonRpcResponse(id: Any?, result: Map<String, Any>) {
-        val response = mapOf(
-            "jsonrpc" to "2.0",
-            "id" to id,
-            "result" to result
-        )
-        val json = objectMapper.writeValueAsString(response)
-        println(json)
-        System.out.flush()
-    }
-
-    private fun writeJsonRpcError(id: Any?, code: Int, message: String, data: String? = null) {
-        val error = mapOf(
-            "code" to code,
-            "message" to message
-        ) + if (data != null) mapOf("data" to data) else emptyMap()
-        
-        val response = mapOf(
-            "jsonrpc" to "2.0",
-            "id" to id,
-            "error" to error
-        )
-        val json = objectMapper.writeValueAsString(response)
-        println(json)
-        System.out.flush()
-    }
-
-    private fun writeResponse(response: Map<String, Any>) {
-        val json = objectMapper.writeValueAsString(response)
-        println(json)
-        System.out.flush()
-    }
-
-    private fun writeError(message: String) {
-        writeResponse(mapOf("error" to message))
-    }
 }
-

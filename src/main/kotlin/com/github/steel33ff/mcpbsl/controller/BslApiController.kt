@@ -5,6 +5,7 @@ import com.github.steel33ff.mcpbsl.bsl.BslCliService
 import com.github.steel33ff.mcpbsl.bsl.FormatResult
 import com.github.steel33ff.mcpbsl.dto.*
 import com.github.steel33ff.mcpbsl.service.PathMappingService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -21,6 +22,7 @@ class BslApiController(
     private val bslCliService: BslCliService,
     private val pathMappingService: PathMappingService
 ) {
+    private val logger = KotlinLogging.logger {}
 
     @PostMapping("/analyze")
     @Operation(
@@ -28,8 +30,10 @@ class BslApiController(
         description = "Run BSL Language Server analysis on source directory. Returns diagnostics found."
     )
     fun analyze(@RequestBody request: AnalyzeRequest): ResponseEntity<Any> {
+        logger.info { "Received analyze request for path: ${request.srcDir}" }
         return try {
             val containerPath = pathMappingService.translateToContainerPath(request.srcDir)
+            logger.info { "Translated to container path: $containerPath" }
 
             val result = bslCliService.analyze(
                 srcDir = containerPath,
