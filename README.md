@@ -104,7 +104,7 @@ docker run --rm -d `
   --name mcp-bsl-server-checker `
   -e MCP_TRANSPORT=http `
   -p 9090:9090 `
-  -p 8080:8080 `
+  -p 9090:9090 `
   -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
   mcp-bsl-server:latest
 ```
@@ -260,7 +260,7 @@ enabled = false  # Было: true
 Перезапустите: `docker-compose restart grafana`. Логин: `admin`, пароль: `admin`.
 
 **Что запустится:**
-- ✅ MCP BSL Server (порты 9090, 8080)
+- ✅ MCP BSL Server (порт 9090)
 - ✅ Grafana (порт 3000) — графический интерфейс
 - ✅ Loki (порт 3100) — сбор логов
 - ✅ Prometheus (порт 9091) — сбор метрик
@@ -282,12 +282,12 @@ docker-compose down
 ---
 
 **Проблема:** `Error: port is already allocated`
-**Решение:** Порт 9090 или 8080 уже занят. Остановите другие приложения или измените порты:
+**Решение:** Порт 9090 уже занят. Остановите другие приложения или измените порт:
 ```powershell
 docker run --rm -d `
   --name mcp-bsl-server-checker `
   -p 9091:9090 `
-  -p 8081:8080 `
+  -p 9091:9090 `
   ... (остальные параметры)
 ```
 

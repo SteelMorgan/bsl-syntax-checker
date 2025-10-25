@@ -10,19 +10,18 @@ services:
     container_name: mcp-bsl-server-checker
     ports:
       - "9090:9090"  # Web UI (ALWAYS active)
-      - "${MCP_PORT:-8080}:8080"  # MCP port (for http/sse/ndjson modes)
+      - "${MCP_PORT:-9090}:9090"  # MCP port (for http/sse/ndjson modes)
     environment:
       - WEB_UI_PORT=9090
-      - MCP_TRANSPORT=${MCP_TRANSPORT:-http}
-      - MCP_PORT=8080
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-ndjson}
+      - MCP_PORT=9090
       - LOGGING_ENABLED=${LOGGING_ENABLED:-true}
-      - MOUNT_HOST_ROOT=${MOUNT_HOST_ROOT:-}
-      - BSL_MAX_HEAP=${BSL_MAX_HEAP:-4g}
-      - BSL_POOL_MAX_SIZE=${BSL_POOL_MAX_SIZE:-5}
-      - BSL_POOL_TTL=${BSL_POOL_TTL:-60}
+      - BSL_MAX_HEAP=4g
+      - BSL_POOL_MAX_SIZE=5
+      - BSL_POOL_TTL=60
       - logging.loki.url=http://loki:3100/loki/api/v1/push
     volumes:
-      - "${MOUNT_HOST_ROOT:-./testdata}:/workspaces:ro"
+      - "${MOUNT_HOST_ROOT:-./testdata}:/workspaces"
     depends_on:
       - loki
     networks:

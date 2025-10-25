@@ -179,20 +179,15 @@ class BslOutputParser {
         
         // Try to extract numbers from text output
         lines.forEach { line ->
-            when {
-                line.contains("error", ignoreCase = true) -> {
-                    val match = Regex("(\\d+)\\s*error").find(line)
-                    if (match != null) errors = match.groupValues[1].toIntOrNull() ?: 0
-                }
-                line.contains("warning", ignoreCase = true) -> {
-                    val match = Regex("(\\d+)\\s*warning").find(line)
-                    if (match != null) warnings = match.groupValues[1].toIntOrNull() ?: 0
-                }
-                line.contains("info", ignoreCase = true) -> {
-                    val match = Regex("(\\d+)\\s*info").find(line)
-                    if (match != null) info = match.groupValues[1].toIntOrNull() ?: 0
-                }
-            }
+            // Look for patterns like "3 errors and 7 warnings"
+            val errorMatch = Regex("(\\d+)\\s*error").find(line)
+            if (errorMatch != null) errors = errorMatch.groupValues[1].toIntOrNull() ?: 0
+            
+            val warningMatch = Regex("(\\d+)\\s*warning").find(line)
+            if (warningMatch != null) warnings = warningMatch.groupValues[1].toIntOrNull() ?: 0
+            
+            val infoMatch = Regex("(\\d+)\\s*info").find(line)
+            if (infoMatch != null) info = infoMatch.groupValues[1].toIntOrNull() ?: 0
         }
         
         return mapOf(
@@ -220,7 +215,8 @@ class BslOutputParser {
         // Try to extract information from text output
         lines.forEach { line ->
             when {
-                line.contains("formatted", ignoreCase = true) -> formatted = true
+                line.contains("formatted", ignoreCase = true) || 
+                line.contains("formatting", ignoreCase = true) -> formatted = true
                 line.contains("changed", ignoreCase = true) -> {
                     val match = Regex("(\\d+)\\s*file").find(line)
                     if (match != null) filesChanged = match.groupValues[1].toIntOrNull() ?: 0

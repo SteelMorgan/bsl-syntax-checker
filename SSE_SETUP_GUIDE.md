@@ -38,7 +38,7 @@ docker run --rm -d \
 {
   "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
   "mcpServers": {
-    "bsl-mcp-sse": {
+    "bsl-checker": {
       "description": "📡 MCP SSE режим для потокового анализа",
       "command": "docker",
       "args": [
@@ -62,14 +62,7 @@ docker run --rm -d \
         "MOUNT_HOST_ROOT": "D:\\My Projects\\Projects 1C",
         "LOGGING_ENABLED": "true"
       },
-      "disabled": false,
-      "alwaysAllow": [
-        "bslcheck_analyze",
-        "bslcheck_format", 
-        "bslcheck_session_start",
-        "bslcheck_session_status",
-        "bslcheck_session_stop"
-      ]
+      "disabled": false
     }
   }
 }

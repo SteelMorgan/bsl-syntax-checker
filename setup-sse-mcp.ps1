@@ -149,7 +149,7 @@ if (-not $SkipConfig) {
     $config = @{
         "`$schema" = "https://modelcontextprotocol.io/schema/mcp-config.json"
         mcpServers = @{
-            "bsl-mcp-sse" = @{
+            "bsl-checker" = @{
                 description = "📡 MCP SSE режим для потокового анализа"
                 command = "docker"
                 args = @(
@@ -174,13 +174,6 @@ if (-not $SkipConfig) {
                     LOGGING_ENABLED = "true"
                 }
                 disabled = $false
-                alwaysAllow = @(
-                    "bslcheck_analyze",
-                    "bslcheck_format", 
-                    "bslcheck_session_start",
-                    "bslcheck_session_status",
-                    "bslcheck_session_stop"
-                )
             }
         }
     }

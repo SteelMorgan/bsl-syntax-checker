@@ -1,7 +1,9 @@
-# Web UI Server (ALWAYS active)
+# Web UI Server (conditional - disabled for stdio mode)
 server:
   port: ${WEB_UI_PORT:9090}
   shutdown: graceful
+  servlet:
+    context-path: /
 
 spring:
   application:
@@ -22,11 +24,13 @@ logging:
   level:
     root: INFO
     com.github.steel33ff.mcpbsl: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   loki:
     enabled: ${LOGGING_ENABLED:true}
-    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    url: ${LOKI_URL:http://loki:3100/loki/api/v1/push}
 
 # Management endpoints (Actuator) - on Web UI port
 management:
@@ -58,7 +62,7 @@ springdoc:
 # MCP Transport configuration
 mcp:
   transport: ${MCP_TRANSPORT:http}   # Options: stdio, http, sse, ndjson
-  port: ${MCP_PORT:8080}             # Only for http/sse/ndjson modes
+  port: ${MCP_PORT:9090}             # Only for http/sse/ndjson modes
 
 # Conditional transport activation
 transport:

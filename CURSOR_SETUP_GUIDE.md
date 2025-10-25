@@ -49,7 +49,7 @@ docker run --rm -d \
 
 3. **Включите stdio режим**:
    ```json
-   "bsl-mcp-stdio": {
+   "bsl-checker": {
      "disabled": false
    }
    ```
@@ -64,7 +64,7 @@ docker run --rm -d \
 {
   "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
   "mcpServers": {
-    "bsl-mcp-stdio": {
+    "bsl-checker": {
       "description": "🎯 MCP stdio режим для Cursor IDE",
       "command": "docker",
       "args": [
@@ -79,14 +79,7 @@ docker run --rm -d \
         "MCP_TRANSPORT": "stdio",
         "LOGGING_ENABLED": "false"
       },
-      "disabled": false,
-      "alwaysAllow": [
-        "bslcheck_analyze",
-        "bslcheck_format", 
-        "bslcheck_session_start",
-        "bslcheck_session_status",
-        "bslcheck_session_stop"
-      ]
+      "disabled": false
     }
   }
 }
@@ -98,7 +91,7 @@ docker run --rm -d \
 {
   "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
   "mcpServers": {
-    "bsl-mcp-http": {
+    "bsl-checker": {
       "description": "🌐 MCP HTTP режим для внешних интеграций",
       "command": "docker",
       "args": [

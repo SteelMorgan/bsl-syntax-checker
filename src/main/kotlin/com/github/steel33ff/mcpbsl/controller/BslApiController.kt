@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import kotlin.io.path.*
 
 /**
  * REST API controller for BSL operations
@@ -30,13 +31,13 @@ class BslApiController(
     @PostMapping("/analyze")
     @Operation(
         summary = "Analyze BSL source code",
-        description = "Run BSL Language Server analysis on source file or directory. " +
+        description = "Run BSL Language Server analysis on source directory. " +
                      "Note: BSL Language Server works with directories only. " +
                      "If a file path is provided, the parent directory will be analyzed. " +
                      "Returns diagnostics found."
     )
     fun analyze(@RequestBody request: AnalyzeRequest): ResponseEntity<Any> {
-        logger.info { "Received analyze request for path: ${request.srcDir}" }
+        logger.info { "Received analyze request for path: ${request.srcDir}, reporters: ${request.reporters}, language: ${request.language}" }
         return try {
             val containerPath = pathMappingService.translateToContainerPath(request.srcDir)
             logger.info { "Translated to container path: $containerPath" }
@@ -62,6 +63,8 @@ class BslApiController(
                     val summaryData = data["summary"] as? Map<*, *>
                     val diagnosticsData = data["diagnostics"] as? List<*>
                     
+                    logger.info { "Analysis completed successfully. Errors: ${summaryData?.get("errors")}, Warnings: ${summaryData?.get("warnings")}" }
+                    
                     val response = AnalyzeResponse(
                         summary = AnalyzeSummary(
                             errors = summaryData?.get("errors") as? Int ?: 0,
@@ -83,6 +86,7 @@ class BslApiController(
                     ResponseEntity.ok(response)
                 }
                 is AnalyzeResult.Failure -> {
+                    logger.error { "Analysis failed: ${result.error}" }
                     ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(ErrorResponse(error = result.error, code = "ANALYZE_FAILED"))
                 }
@@ -96,11 +100,15 @@ class BslApiController(
     @PostMapping("/format")
     @Operation(
         summary = "Format BSL source code",
-        description = "Run BSL Language Server formatter on source file or directory"
+        description = "Run BSL Language Server formatter on source directory. " +
+                     "Note: BSL Language Server works with directories only. " +
+                     "If a file path is provided, the parent directory will be used for formatting."
     )
     fun format(@RequestBody request: FormatRequest): ResponseEntity<Any> {
+        logger.info { "Received format request for path: ${request.src}, inPlace: ${request.inPlace}" }
         return try {
             val containerPath = pathMappingService.translateToContainerPath(request.src)
+            logger.info { "Translated to container path: $containerPath" }
 
             // Validate that the path exists and is accessible
             if (!pathMappingService.validatePath(containerPath)) {
@@ -111,6 +119,22 @@ class BslApiController(
                     ))
             }
 
+            // Check if inPlace formatting is requested and path is writable
+            if (request.inPlace) {
+                try {
+                    val testFile = containerPath.resolve("test-write-permission.tmp")
+                    testFile.writeText("test")
+                    testFile.deleteExisting()
+                } catch (e: Exception) {
+                    logger.warn { "Path is not writable for in-place formatting: $containerPath" }
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ErrorResponse(
+                            error = "Path '${request.src}' is not writable. Check Docker volume permissions.",
+                            code = "PATH_NOT_WRITABLE"
+                        ))
+                }
+            }
+
             val result = bslCliService.format(
                 src = containerPath,
                 inPlace = request.inPlace
@@ -119,13 +143,17 @@ class BslApiController(
             when (result) {
                 is FormatResult.Success -> {
                     val data = result.data
+                    val filesChanged = data["filesChanged"] as? Int ?: 0
+                    logger.info { "Formatting completed successfully. Files changed: $filesChanged" }
+                    
                     val response = FormatResponse(
                         formatted = data["formatted"] as? Boolean ?: true,
-                        filesChanged = data["filesChanged"] as? Int ?: 0
+                        filesChanged = filesChanged
                     )
                     ResponseEntity.ok(response)
                 }
                 is FormatResult.Failure -> {
+                    logger.error { "Formatting failed: ${result.error}" }
                     ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(ErrorResponse(error = result.error, code = "FORMAT_FAILED"))
                 }

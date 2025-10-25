@@ -145,7 +145,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (level) (count_over_time({job=\"mcp-bsl-server\"} [$__interval]))",
+          "expr": "sum by (level) (count_over_time({app=\"mcp-bsl-server\"} [$__interval]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -183,7 +183,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"mcp-bsl-server\"}",
+          "expr": "{app=\"mcp-bsl-server\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -245,7 +245,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (level) (count_over_time({job=\"mcp-bsl-server\"} [$__range]))",
+          "expr": "sum by (level) (count_over_time({app=\"mcp-bsl-server\"} [$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -283,7 +283,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"mcp-bsl-server\"} |~ \"ERROR|WARN\"",
+          "expr": "{app=\"mcp-bsl-server\"} |~ \"ERROR|WARN\"",
           "queryType": "range",
           "refId": "A"
         }

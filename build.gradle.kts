@@ -58,3 +58,15 @@ kotlin {
     }
 }
 
+// Specify main class for JAR
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "com.github.steel33ff.mcpbsl.McpBslServerApplicationKt"
+    }
+}
+
+// For Spring Boot JAR
+springBoot {
+    mainClass.set("com.github.steel33ff.mcpbsl.McpBslServerApplicationKt")
+}
+

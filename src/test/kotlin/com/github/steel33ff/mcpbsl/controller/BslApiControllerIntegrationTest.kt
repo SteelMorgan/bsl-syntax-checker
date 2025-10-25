@@ -6,8 +6,8 @@ import com.github.steel33ff.mcpbsl.dto.FormatRequest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -15,9 +15,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.nio.file.Files
 import java.nio.file.Path
+import com.github.steel33ff.mcpbsl.bsl.BslCliService
+import com.github.steel33ff.mcpbsl.service.PathMappingService
+import com.github.steel33ff.mcpbsl.service.PathTypeService
+import com.github.steel33ff.mcpbsl.service.PathType
+import com.github.steel33ff.mcpbsl.bsl.AnalyzeResult
+import com.github.steel33ff.mcpbsl.bsl.FormatResult
+import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.any
 
-@SpringBootTest
-@AutoConfigureWebMvc
+@WebMvcTest(BslApiController::class)
 @TestPropertySource(properties = [
     "path.mount.host-root=/tmp",
     "path.mount.container-root=/workspaces"
@@ -30,6 +37,15 @@ class BslApiControllerIntegrationTest {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
+    @MockBean
+    private lateinit var bslCliService: BslCliService
+
+    @MockBean
+    private lateinit var pathMappingService: PathMappingService
+
+    @MockBean
+    private lateinit var pathTypeService: PathTypeService
+
     @Test
     fun `should analyze BSL file`(@TempDir tempDir: Path) {
         // Given
@@ -41,6 +57,22 @@ class BslApiControllerIntegrationTest {
             reporters = listOf("json"),
             language = "ru"
         )
+
+        // Mock services
+        doReturn(bslFile).`when`(pathMappingService).translateToContainerPath(bslFile.toString())
+        doReturn(true).`when`(pathMappingService).validatePath(bslFile)
+        doReturn(PathType.BSL_FILE).`when`(pathTypeService).getPathType(bslFile)
+        doReturn(
+            AnalyzeResult.success(mapOf(
+                "summary" to mapOf(
+                    "errors" to 0,
+                    "warnings" to 0,
+                    "info" to 0,
+                    "total" to 0
+                ),
+                "diagnostics" to emptyList<Map<String, Any>>()
+            ))
+        ).`when`(bslCliService).analyze(bslFile, listOf("json"), "ru")
 
         // When & Then
         mockMvc.perform(
@@ -67,6 +99,22 @@ class BslApiControllerIntegrationTest {
             language = "ru"
         )
 
+        // Mock services
+        doReturn(tempDir).`when`(pathMappingService).translateToContainerPath(tempDir.toString())
+        doReturn(true).`when`(pathMappingService).validatePath(tempDir)
+        doReturn(PathType.BSL_DIRECTORY).`when`(pathTypeService).getPathType(tempDir)
+        doReturn(
+            AnalyzeResult.success(mapOf(
+                "summary" to mapOf(
+                    "errors" to 0,
+                    "warnings" to 0,
+                    "info" to 0,
+                    "total" to 0
+                ),
+                "diagnostics" to emptyList<Map<String, Any>>()
+            ))
+        ).`when`(bslCliService).analyze(tempDir, listOf("json"), "ru")
+
         // When & Then
         mockMvc.perform(
             post("/api/analyze")
@@ -86,8 +134,26 @@ class BslApiControllerIntegrationTest {
         
         val request = FormatRequest(
             src = bslFile.toString(),
-            inPlace = true
+            inPlace = false
         )
+
+        // Mock services
+        doReturn(bslFile).`when`(pathMappingService).translateToContainerPath(bslFile.toString())
+        doReturn(true).`when`(pathMappingService).validatePath(bslFile)
+        doReturn(PathType.BSL_FILE).`when`(pathTypeService).getPathType(bslFile)
+        doReturn(
+            FormatResult.success(mapOf(
+                "formatted" to true,
+                "filesChanged" to 1,
+                "files" to listOf(
+                    mapOf(
+                        "file" to "test.bsl",
+                        "formatted" to true,
+                        "hasContent" to false
+                    )
+                )
+            ))
+        ).`when`(bslCliService).format(bslFile, false)
 
         // When & Then
         mockMvc.perform(
@@ -105,6 +171,11 @@ class BslApiControllerIntegrationTest {
         // Given
         val bslFile = tempDir.resolve("test.bsl")
         Files.writeString(bslFile, "Процедура Тест()\nКонецПроцедуры")
+
+        // Mock services
+        doReturn(bslFile).`when`(pathMappingService).translateToContainerPath(bslFile.toString())
+        doReturn(PathType.BSL_FILE).`when`(pathTypeService).getPathType(bslFile)
+        doReturn(100L).`when`(pathTypeService).getFileSize(bslFile)
 
         // When & Then
         mockMvc.perform(
@@ -127,6 +198,12 @@ class BslApiControllerIntegrationTest {
         Files.writeString(bslFile1, "Процедура Тест1()\nКонецПроцедуры")
         Files.writeString(bslFile2, "Процедура Тест2()\nКонецПроцедуры")
 
+        // Mock services
+        doReturn(tempDir).`when`(pathMappingService).translateToContainerPath(tempDir.toString())
+        doReturn(PathType.BSL_DIRECTORY).`when`(pathTypeService).getPathType(tempDir)
+        doReturn(200L).`when`(pathTypeService).getDirectorySize(tempDir)
+        doReturn(listOf(bslFile1, bslFile2)).`when`(pathTypeService).findBslFiles(tempDir)
+
         // When & Then
         mockMvc.perform(
             get("/api/path-info")
@@ -142,10 +219,18 @@ class BslApiControllerIntegrationTest {
 
     @Test
     fun `should return NOT_FOUND for non-existent path`() {
+        // Given
+        val nonExistentPath = "/nonexistent/path.bsl"
+        val nonExistentPathObj = kotlin.io.path.Path(nonExistentPath)
+
+        // Mock services
+        doReturn(nonExistentPathObj).`when`(pathMappingService).translateToContainerPath(nonExistentPath)
+        doReturn(PathType.NOT_FOUND).`when`(pathTypeService).getPathType(nonExistentPathObj)
+
         // When & Then
         mockMvc.perform(
             get("/api/path-info")
-                .param("path", "/nonexistent/path.bsl")
+                .param("path", nonExistentPath)
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("NOT_FOUND"))

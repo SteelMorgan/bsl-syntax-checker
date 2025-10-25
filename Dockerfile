@@ -36,8 +36,10 @@ RUN mkdir -p /opt/bsl && \
     wget -O "$BSL_JAR_PATH" "$DOWNLOAD_URL" && \
     chmod +x "$BSL_JAR_PATH"
 
-# Copy application JAR
+# Copy application JAR and scripts
 COPY build/libs/*.jar app.jar
+COPY run-stdio.sh /app/run-stdio.sh
+RUN chmod +x /app/run-stdio.sh
 
 # Create temporary directory for BSL reports
 RUN mkdir -p /tmp/bsl-reports
@@ -48,14 +50,16 @@ VOLUME ["/workspaces"]
 # Environment variables
 ENV WEB_UI_PORT=9090
 ENV MCP_TRANSPORT=http
-ENV MCP_PORT=8080
+ENV MCP_PORT=9090
 ENV LOGGING_ENABLED=true
 ENV BSL_JAR_PATH=/opt/bsl/bsl-language-server.jar
 ENV BSL_MAX_HEAP=4g
+ENV SPRING_PROFILES_ACTIVE=default
+ENV MOUNT_HOST_ROOT=/workspaces
 
 # Expose ports
 EXPOSE 9090
-EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Use stdio script for stdio mode, regular jar for other modes
+ENTRYPOINT ["sh", "-c", "if [ \"$MCP_TRANSPORT\" = \"stdio\" ]; then /app/run-stdio.sh; else java -jar /app/app.jar; fi"]
 

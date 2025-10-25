@@ -14,15 +14,22 @@
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
             <url>${lokiUrl}</url>
+            <connectionTimeoutMs>5000</connectionTimeoutMs>
+            <requestTimeoutMs>10000</requestTimeoutMs>
         </http>
         <format>
             <label>
-                <pattern>app=${appName},host=${HOSTNAME:-localhost},level=%level</pattern>
+                <pattern>app=${appName},host=${HOSTNAME:-localhost},level=%level,job=mcp-bsl-server</pattern>
             </label>
             <message>
                 <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             </message>
         </format>
+        <batch>
+            <maxItems>10</maxItems>
+            <maxBytes>1048576</maxBytes>
+            <timeoutMs>1000</timeoutMs>
+        </batch>
     </appender>
 
     <!-- Root logger -->
@@ -33,8 +40,13 @@
     <!-- Application logger -->
     <logger name="com.github.steel33ff.mcpbsl" level="DEBUG"/>
     
+    <!-- HTTP request logging -->
+    <logger name="org.springframework.web" level="DEBUG"/>
+    <logger name="org.springframework.web.servlet" level="DEBUG"/>
+    
     <springProfile name="!test">
         <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="LOKI"/>
         </root>
     </springProfile>

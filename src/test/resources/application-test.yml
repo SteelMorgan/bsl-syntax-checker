@@ -10,7 +10,7 @@ logging:
 
 mcp:
   transport: stdio
-  port: 8080
+  port: 9090
 
 bsl:
   jar-path: /tmp/bsl-language-server.jar

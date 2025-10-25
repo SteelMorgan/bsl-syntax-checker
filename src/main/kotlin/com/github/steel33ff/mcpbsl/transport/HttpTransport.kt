@@ -45,6 +45,8 @@ class HttpTransport(
                 "initialize" -> handleInitialize(id, params)
                 "tools/list" -> handleToolsList(id, params)
                 "tools/call" -> handleToolsCall(id, params)
+                "prompts/list" -> handlePromptsList(id, params)
+                "resources/list" -> handleResourcesList(id, params)
                 else -> {
                     logger.warn { "Unknown MCP method: $method" }
                     return mapOf(
@@ -331,7 +333,7 @@ class HttpTransport(
         return mapOf(
             "protocolVersion" to "2024-11-05",
             "capabilities" to mapOf(
-                "tools" to mapOf("listChanged" to true),
+                "tools" to emptyMap<String, Any>(),
                 "prompts" to emptyMap<String, Any>(),
                 "resources" to emptyMap<String, Any>(),
                 "logging" to emptyMap<String, Any>()
@@ -348,13 +350,13 @@ class HttpTransport(
         val tools = listOf(
             mapOf(
                 "name" to "bslcheck_analyze",
-                "description" to "Analyze BSL source code for errors and warnings",
+                "description" to "Analyze BSL source code for errors and warnings. Works with directories containing BSL files. IMPORTANT: All paths must be absolute and start with '/workspaces/'.",
                 "inputSchema" to mapOf(
                     "type" to "object",
                     "properties" to mapOf(
                         "srcDir" to mapOf(
                             "type" to "string",
-                            "description" to "Source directory path to analyze"
+                            "description" to "Source directory path containing BSL files to analyze. MUST be absolute path starting with '/workspaces/' (e.g., '/workspaces/project/src'). Paths outside /workspaces/ will be rejected."
                         ),
                         "reporters" to mapOf(
                             "type" to "array",
@@ -373,13 +375,13 @@ class HttpTransport(
             ),
             mapOf(
                 "name" to "bslcheck_format",
-                "description" to "Format BSL source code",
+                "description" to "Format BSL source code. Works with directories containing BSL files. IMPORTANT: All paths must be absolute and start with '/workspaces/'.",
                 "inputSchema" to mapOf(
                     "type" to "object",
                     "properties" to mapOf(
                         "src" to mapOf(
                             "type" to "string",
-                            "description" to "Source file or directory path to format"
+                            "description" to "Source directory path containing BSL files to format. MUST be absolute path starting with '/workspaces/' (e.g., '/workspaces/project/src'). Paths outside /workspaces/ will be rejected."
                         ),
                         "inPlace" to mapOf(
                             "type" to "boolean",
@@ -392,13 +394,13 @@ class HttpTransport(
             ),
             mapOf(
                 "name" to "bslcheck_session_start",
-                "description" to "Start BSL Language Server session for a project",
+                "description" to "Start BSL Language Server session for a project. IMPORTANT: All paths must be absolute and start with '/workspaces/'.",
                 "inputSchema" to mapOf(
                     "type" to "object",
                     "properties" to mapOf(
                         "projectPath" to mapOf(
                             "type" to "string",
-                            "description" to "Project path for the session"
+                            "description" to "Project path for the session. MUST be absolute path starting with '/workspaces/' (e.g., '/workspaces/project'). Paths outside /workspaces/ will be rejected."
                         )
                     ),
                     "required" to listOf("projectPath")
@@ -434,6 +436,16 @@ class HttpTransport(
             )
         )
         return mapOf("tools" to tools)
+    }
+
+    private fun handlePromptsList(id: Any?, params: Map<String, Any>): Map<String, Any> {
+        logger.info { "MCP prompts/list request received" }
+        return mapOf("prompts" to emptyList<Any>())
+    }
+
+    private fun handleResourcesList(id: Any?, params: Map<String, Any>): Map<String, Any> {
+        logger.info { "MCP resources/list request received" }
+        return mapOf("resources" to emptyList<Any>())
     }
 
     private fun handleToolsCall(id: Any?, params: Map<String, Any>): Map<String, Any> {

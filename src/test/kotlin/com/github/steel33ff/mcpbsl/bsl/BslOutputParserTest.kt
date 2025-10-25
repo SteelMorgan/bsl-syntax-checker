@@ -11,28 +11,32 @@ class BslOutputParserTest {
     fun `should parse valid JSON analysis output`() {
         val jsonOutput = """
         {
-            "summary": {
-                "errors": 2,
-                "warnings": 5,
-                "info": 1,
-                "total": 8
-            },
-            "diagnostics": [
+            "date": "2025-10-25T14:36:32.000Z",
+            "sourceDir": "/workspaces/test",
+            "fileinfos": [
                 {
-                    "file": "Module.bsl",
-                    "line": 10,
-                    "column": 5,
-                    "code": "LineLength",
-                    "severity": "warning",
-                    "message": "Line is too long"
-                },
-                {
-                    "file": "Module.bsl",
-                    "line": 15,
-                    "column": 0,
-                    "code": "SyntaxError",
-                    "severity": "error",
-                    "message": "Syntax error"
+                    "path": "Module.bsl",
+                    "mdoRef": null,
+                    "diagnostics": [
+                        {
+                            "range": {
+                                "start": { "line": 10, "character": 5 },
+                                "end": { "line": 10, "character": 20 }
+                            },
+                            "severity": "warning",
+                            "code": "LineLength",
+                            "message": "Line is too long"
+                        },
+                        {
+                            "range": {
+                                "start": { "line": 15, "character": 0 },
+                                "end": { "line": 15, "character": 10 }
+                            },
+                            "severity": "error",
+                            "code": "SyntaxError",
+                            "message": "Syntax error"
+                        }
+                    ]
                 }
             ]
         }
@@ -41,10 +45,10 @@ class BslOutputParserTest {
         val result = parser.parseAnalysisOutput(jsonOutput)
 
         assertNotNull(result)
-        assertEquals(2, (result["summary"] as Map<*, *>)["errors"])
-        assertEquals(5, (result["summary"] as Map<*, *>)["warnings"])
-        assertEquals(1, (result["summary"] as Map<*, *>)["info"])
-        assertEquals(8, (result["summary"] as Map<*, *>)["total"])
+        assertEquals(1, (result["summary"] as Map<*, *>)["errors"])
+        assertEquals(1, (result["summary"] as Map<*, *>)["warnings"])
+        assertEquals(0, (result["summary"] as Map<*, *>)["info"])
+        assertEquals(2, (result["summary"] as Map<*, *>)["total"])
 
         val diagnostics = result["diagnostics"] as List<*>
         assertEquals(2, diagnostics.size)
@@ -105,6 +109,7 @@ class BslOutputParserTest {
         assertNotNull(result)
         assertEquals(3, (result["summary"] as Map<*, *>)["errors"])
         assertEquals(7, (result["summary"] as Map<*, *>)["warnings"])
+        assertEquals(0, (result["summary"] as Map<*, *>)["info"])
         assertEquals(10, (result["summary"] as Map<*, *>)["total"])
     }
 
@@ -113,13 +118,43 @@ class BslOutputParserTest {
         val mixedOutput = """
         Starting BSL analysis...
         {
-            "summary": {
-                "errors": 1,
-                "warnings": 2,
-                "info": 0,
-                "total": 3
-            },
-            "diagnostics": []
+            "date": "2025-10-25T14:36:32.000Z",
+            "sourceDir": "/workspaces/test",
+            "fileinfos": [
+                {
+                    "path": "Module.bsl",
+                    "mdoRef": null,
+                    "diagnostics": [
+                        {
+                            "range": {
+                                "start": { "line": 10, "character": 5 },
+                                "end": { "line": 10, "character": 20 }
+                            },
+                            "severity": "error",
+                            "code": "SyntaxError",
+                            "message": "Syntax error"
+                        },
+                        {
+                            "range": {
+                                "start": { "line": 15, "character": 0 },
+                                "end": { "line": 15, "character": 10 }
+                            },
+                            "severity": "warning",
+                            "code": "LineLength",
+                            "message": "Line is too long"
+                        },
+                        {
+                            "range": {
+                                "start": { "line": 20, "character": 0 },
+                                "end": { "line": 20, "character": 5 }
+                            },
+                            "severity": "warning",
+                            "code": "StyleWarning",
+                            "message": "Style warning"
+                        }
+                    ]
+                }
+            ]
         }
         Analysis completed.
         """.trimIndent()
@@ -129,6 +164,7 @@ class BslOutputParserTest {
         assertNotNull(result)
         assertEquals(1, (result["summary"] as Map<*, *>)["errors"])
         assertEquals(2, (result["summary"] as Map<*, *>)["warnings"])
+        assertEquals(0, (result["summary"] as Map<*, *>)["info"])
         assertEquals(3, (result["summary"] as Map<*, *>)["total"])
     }
 

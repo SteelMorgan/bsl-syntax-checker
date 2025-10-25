@@ -4,6 +4,7 @@ import com.github.steel33ff.mcpbsl.bsl.AnalyzeResult
 import com.github.steel33ff.mcpbsl.bsl.BslCliService
 import com.github.steel33ff.mcpbsl.bsl.FormatResult
 import com.github.steel33ff.mcpbsl.service.PathMappingService
+import com.github.steel33ff.mcpbsl.service.PathTypeService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,6 +32,9 @@ class BslApiControllerTest {
 
         @Bean
         fun pathMappingService(): PathMappingService = mockk(relaxed = true)
+
+        @Bean
+        fun pathTypeService(): PathTypeService = mockk(relaxed = true)
     }
 
     @Autowired
@@ -115,12 +119,13 @@ class BslApiControllerTest {
         )
 
         every { pathMappingService.translateToContainerPath(any()) } returns containerPath
+        every { pathMappingService.validatePath(any()) } returns true
         every { bslCliService.format(any(), any()) } returns formatResult
 
         val requestBody = """
             {
                 "src": "D:\\Projects\\TestProject\\Module.bsl",
-                "inPlace": true
+                "inPlace": false
             }
         """.trimIndent()
 
@@ -135,7 +140,35 @@ class BslApiControllerTest {
             .andExpect(jsonPath("$.filesChanged").value(3))
 
         verify { pathMappingService.translateToContainerPath("D:\\Projects\\TestProject\\Module.bsl") }
-        verify { bslCliService.format(containerPath, true) }
+        verify { bslCliService.format(containerPath, false) }
+    }
+
+    @Test
+    fun `format should return error when path is not writable for inPlace formatting`() {
+        // Arrange
+        val containerPath = Path("/workspaces/test-project/Module.bsl")
+        
+        every { pathMappingService.translateToContainerPath(any()) } returns containerPath
+        every { pathMappingService.validatePath(any()) } returns true
+
+        val requestBody = """
+            {
+                "src": "D:\\Projects\\TestProject\\Module.bsl",
+                "inPlace": true
+            }
+        """.trimIndent()
+
+        // Act & Assert
+        mockMvc.perform(
+            post("/api/format")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error").value("Path 'D:\\Projects\\TestProject\\Module.bsl' is not writable. Check Docker volume permissions."))
+            .andExpect(jsonPath("$.code").value("PATH_NOT_WRITABLE"))
+
+        verify { pathMappingService.translateToContainerPath("D:\\Projects\\TestProject\\Module.bsl") }
     }
 
     @Test

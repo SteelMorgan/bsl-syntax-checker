@@ -1,0 +1,8 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
+  "mcpServers": {
+    "bsl-checker": {
+      "url": "http://localhost:9090/mcp"
+    }
+  }
+}

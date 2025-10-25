@@ -1,5 +1,6 @@
 package com.github.steel33ff.mcpbsl
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
@@ -15,6 +16,10 @@ import org.springframework.boot.runApplication
 class McpBslServerApplication
 
 fun main(args: Array<String>) {
+    val logger = KotlinLogging.logger {}
+    logger.info { "Starting MCP BSL Server - testing Loki logging" }
+    logger.warn { "This is a WARNING log to test Loki" }
+    logger.error { "This is an ERROR log to test Loki" }
     runApplication<McpBslServerApplication>(*args)
 }
 

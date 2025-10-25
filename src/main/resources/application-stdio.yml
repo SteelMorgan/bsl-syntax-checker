@@ -1,0 +1,23 @@
+# Application configuration for stdio mode (no web server)
+server:
+  port: -1  # Disable web server
+
+# Disable web-related features for stdio mode
+spring:
+  main:
+    web-application-type: none  # Disable web application context
+
+# Disable web-related auto-configurations
+management:
+  endpoints:
+    enabled-by-default: false
+  endpoint:
+    health:
+      enabled: false
+
+# Disable Swagger for stdio mode
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

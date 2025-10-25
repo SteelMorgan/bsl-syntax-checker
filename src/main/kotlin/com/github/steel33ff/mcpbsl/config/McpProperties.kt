@@ -18,7 +18,7 @@ data class McpProperties(
      * Port for HTTP-based transports (http, sse, ndjson)
      * Not used for stdio mode
      */
-    var port: Int = 8080
+    var port: Int = 9090
 ) {
     enum class Transport {
         STDIO,

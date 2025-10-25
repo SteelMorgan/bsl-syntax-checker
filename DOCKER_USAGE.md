@@ -17,7 +17,7 @@ mcp-bsl-server   v0.1.0    651ed3f43777   550MB
 ```powershell
 docker run --rm -i `
   --network host `
-  -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
+  -v 'D:\My Projects\Projects 1C:/workspaces' `
   mcp-bsl-server:latest
 ```
 
@@ -33,13 +33,13 @@ docker run --rm -d `
   -e MCP_TRANSPORT=http `
   -p 9090:9090 `
   -p 8080:8080 `
-  -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
+  -v 'D:\My Projects\Projects 1C:/workspaces' `
   mcp-bsl-server:latest
 ```
 
 **Доступ**:
 - Web UI: http://localhost:9090
-- MCP API: http://localhost:8080
+- MCP API: http://localhost:9090
 - Swagger: http://localhost:9090/swagger-ui
 
 **Управление**:
@@ -77,7 +77,7 @@ docker-compose logs -f mcp-bsl-server
 |------------|--------------|----------|
 | `MCP_TRANSPORT` | stdio | Режим транспорта: stdio, http, sse, ndjson |
 | `WEB_UI_PORT` | 9090 | Порт Web UI (всегда активен) |
-| `MCP_PORT` | 8080 | Порт MCP API (для http/sse/ndjson) |
+| `MCP_PORT` | 9090 | Порт MCP API (для http/sse/ndjson) |
 | `LOGGING_ENABLED` | true | Включить логирование в Loki |
 | `BSL_MAX_HEAP` | 4g | Максимальная память JVM для BSL LS |
 
@@ -86,13 +86,14 @@ docker-compose logs -f mcp-bsl-server
 **Обязательно** монтируйте директорию с вашими 1C проектами:
 
 ```powershell
--v 'D:\My Projects\Projects 1C:/workspaces:ro'
+-v 'D:\My Projects\Projects 1C:/workspaces'
 ```
 
 Где:
 - `D:\My Projects\Projects 1C` - путь на хосте
 - `/workspaces` - путь в контейнере (фиксированный)
-- `:ro` - read-only (рекомендуется)
+
+**Важно**: Том монтируется с правами на запись для поддержки форматирования файлов (`bslcheck_format`).
 
 ## Примеры использования
 
@@ -106,13 +107,13 @@ docker run --rm -d `
   -e MCP_PORT=8080 `
   -p 9091:9090 `
   -p 8081:8080 `
-  -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
+  -v 'D:\My Projects\Projects 1C:/workspaces' `
   mcp-bsl-server:latest
 ```
 
 Доступ:
 - Web UI: http://localhost:9091
-- MCP API: http://localhost:8081
+- MCP API: http://localhost:9091
 
 ### Запуск без логирования
 
@@ -121,7 +122,7 @@ docker run --rm -d `
   --name mcp-bsl-no-logs `
   -e LOGGING_ENABLED=false `
   -p 9090:9090 `
-  -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
+  -v 'D:\My Projects\Projects 1C:/workspaces' `
   mcp-bsl-server:latest
 ```
 
@@ -132,7 +133,7 @@ docker run --rm -d `
   --name mcp-bsl-big `
   -e BSL_MAX_HEAP=8g `
   -p 9090:9090 `
-  -v 'D:\My Projects\Projects 1C:/workspaces:ro' `
+  -v 'D:\My Projects\Projects 1C:/workspaces' `
   mcp-bsl-server:latest
 ```
 
@@ -251,7 +252,7 @@ docker run --rm -it mcp-bsl-server:latest
         "--network",
         "host",
         "-v",
-        "D:\\My Projects\\Projects 1C:/workspaces:ro",
+        "D:\\My Projects\\Projects 1C:/workspaces",
         "mcp-bsl-server:latest"
       ],
       "env": {
@@ -294,9 +295,9 @@ docker system prune -a
    mcp-bsl-server:v0.1.0
    ```
 
-2. **Монтируйте в режиме read-only** (`:ro`):
+2. **Монтируйте с правами на запись** для поддержки форматирования:
    ```powershell
-   -v 'path:/workspaces:ro'
+   -v 'path:/workspaces'
    ```
 
 3. **Используйте Docker Compose** для полного стека с мониторингом

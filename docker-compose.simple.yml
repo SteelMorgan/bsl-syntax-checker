@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mcp-bsl-server:
+    build: .
+    container_name: ${MCP_CONTAINER_NAME:-mcp-bsl-server-checker}
+    ports:
+      - "${WEB_UI_PORT:-9090}:9090"
+      - "${MCP_PORT:-9090}:9090"
+    volumes:
+      - "${MOUNT_HOST_ROOT:-./testdata}:${MOUNT_CONTAINER_ROOT:-/workspaces}"
+    environment:
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-stdio}
+      - MCP_PORT=${MCP_PORT:-9090}
+      - WEB_UI_PORT=9090
+      - MOUNT_HOST_ROOT=${MOUNT_HOST_ROOT:-./testdata}
+      - LOGGING_ENABLED=${LOGGING_ENABLED:-false}
+      - BSL_MAX_HEAP=${BSL_MAX_HEAP:-4g}
+      - BSL_POOL_MAX_SIZE=${BSL_POOL_MAX_SIZE:-5}
+      - BSL_POOL_TTL=${BSL_POOL_TTL:-60}
+      - BSL_JAR_PATH=${BSL_JAR_PATH:-/opt/bsl/bsl-language-server.jar}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

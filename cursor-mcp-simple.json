@@ -7,7 +7,7 @@
       "args": [
         "exec",
         "-i",
-        "mcp-bsl-server-checker",
+        "${MCP_CONTAINER_NAME}",
         "java",
         "-jar",
         "/app/app.jar"

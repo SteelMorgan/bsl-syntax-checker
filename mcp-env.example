@@ -1,0 +1,116 @@
+# MCP BSL Server Environment Configuration
+# Copy this file to .env and adjust values for your environment
+
+# =============================================================================
+# DOCKER CONFIGURATION
+# =============================================================================
+
+# Docker container name for MCP server
+MCP_CONTAINER_NAME=mcp-bsl-server-checker
+
+# Docker image name
+MCP_IMAGE_NAME=mcp-bsl-server:latest
+
+# =============================================================================
+# MCP SERVER CONFIGURATION
+# =============================================================================
+
+# MCP transport mode
+# Options: stdio, http, sse, ndjson
+# - stdio: STDIO режим (использует существующий контейнер через docker exec)
+# - http: HTTP режим (упрощенное подключение к запущенному сервису)
+# - sse: SSE режим (упрощенное потоковое подключение к запущенному сервису)
+# - ndjson: NDJSON режим (упрощенная потоковая передача к запущенному сервису)
+MCP_TRANSPORT=http
+
+# MCP server port (для HTTP/SSE/NDJSON режимов)
+MCP_PORT=9090
+
+# Web UI port (Swagger, logs, metrics)
+WEB_UI_PORT=9090
+
+# =============================================================================
+# PATH MAPPING
+# =============================================================================
+
+# Host root directory containing 1C projects
+# This directory will be mounted to /workspaces in container
+MOUNT_HOST_ROOT=D:\My Projects\Projects 1C
+
+# Container path (usually /workspaces)
+MOUNT_CONTAINER_ROOT=/workspaces
+
+# =============================================================================
+# BSL LANGUAGE SERVER CONFIGURATION
+# =============================================================================
+
+# BSL Language Server JAR path in container
+BSL_JAR_PATH=/opt/bsl/bsl-language-server.jar
+
+# BSL session pool configuration
+BSL_POOL_MAX_SIZE=5
+BSL_POOL_TTL=60
+
+# BSL Language Server heap size
+BSL_MAX_HEAP=4g
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+# Enable/disable logging
+LOGGING_ENABLED=false
+
+# Loki logging URL (for full-stack deployment)
+LOGGING_LOKI_URL=http://loki:3100/loki/api/v1/push
+
+# =============================================================================
+# CURSOR IDE CONFIGURATION
+# =============================================================================
+
+# Cursor MCP settings file path
+# Default: %APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json
+CURSOR_MCP_SETTINGS_PATH=%APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json
+
+# =============================================================================
+# DOCKER COMPOSE CONFIGURATION
+# =============================================================================
+
+# Docker Compose project name
+COMPOSE_PROJECT_NAME=1c-syntax-checker
+
+# =============================================================================
+# УПРОЩЕННЫЕ РЕЖИМЫ (HTTP/SSE/NDJSON)
+# =============================================================================
+# 
+# Для упрощенных режимов (http, sse, ndjson) сервис должен быть запущен в Docker.
+# Конфигурация MCP для Cursor IDE содержит только URL подключения.
+# Все остальные настройки берутся из этого файла окружения.
+#
+# Запуск сервиса:
+# 1. Скопируйте этот файл в .env
+# 2. Настройте переменные окружения
+# 3. Запустите: docker-compose up -d
+# 4. Скопируйте конфигурацию MCP с http://localhost:9090/
+#
+# Режимы:
+# - http: http://localhost:8080/mcp
+# - sse: http://localhost:8080/api/stream/analyze/sse  
+# - ndjson: http://localhost:8080/api/stream/analyze/ndjson
+#
+# =============================================================================
+
+# =============================================================================
+# MONITORING (for full-stack deployment)
+# =============================================================================
+
+# Grafana configuration
+GRAFANA_PORT=3000
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=admin
+
+# Prometheus configuration
+PROMETHEUS_PORT=9091
+
+# Loki configuration
+LOKI_PORT=3100

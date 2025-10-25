@@ -1,0 +1,19 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp-config.json",
+  "mcpServers": {
+    "bsl-checker": {
+      "description": "🌐 MCP HTTP режим - подключение к запущенному сервису",
+      "url": "http://localhost:8080/mcp",
+      "disabled": false
+    }
+  },
+  "_generated": {
+    "timestamp": "2025-01-08T19:30:00Z",
+    "transport_mode": "http",
+    "container_name": "mcp-bsl-server-checker",
+    "web_ui_url": "http://localhost:9090",
+    "mcp_endpoint": "http://localhost:8080/mcp",
+    "mount_host_root": "D:\\My Projects\\Projects 1C",
+    "note": "Сервис должен быть запущен в Docker. Все настройки в файле окружения (.env)"
+  }
+}

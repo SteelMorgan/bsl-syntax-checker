@@ -136,7 +136,7 @@ if (-not $SkipConfig) {
     $config = @{
         "`$schema" = "https://modelcontextprotocol.io/schema/mcp-config.json"
         mcpServers = @{
-            "bsl-mcp-stdio" = @{
+            "bsl-checker" = @{
                 description = "🎯 MCP stdio режим для Cursor IDE"
                 command = "docker"
                 args = @("exec", "-i", $ContainerName, "java", "-jar", "/app/app.jar")
@@ -146,13 +146,6 @@ if (-not $SkipConfig) {
                     LOGGING_ENABLED = "false"
                 }
                 disabled = $false
-                alwaysAllow = @(
-                    "bslcheck_analyze",
-                    "bslcheck_format", 
-                    "bslcheck_session_start",
-                    "bslcheck_session_status",
-                    "bslcheck_session_stop"
-                )
             }
         }
     }

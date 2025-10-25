@@ -1,11 +1,13 @@
 package com.github.steel33ff.mcpbsl.controller
 
 import com.github.steel33ff.mcpbsl.config.McpProperties
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.boot.info.BuildProperties
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
 
@@ -19,10 +21,12 @@ class StatusController(
     private val buildProperties: BuildProperties?,
     private val mcpProperties: McpProperties
 ) {
+    private val logger = KotlinLogging.logger {}
 
     @GetMapping
     @Operation(summary = "Get server status", description = "Returns basic server status information including MCP transport mode")
     fun getStatus(): Map<String, Any> {
+        logger.info { "Status endpoint called - testing logging to Loki" }
         return mapOf(
             "status" to "running",
             "timestamp" to Instant.now().toString(),
@@ -34,12 +38,12 @@ class StatusController(
                 "port" to if (mcpProperties.requiresHttpServer()) mcpProperties.port else null,
                 "requiresHttpServer" to mcpProperties.requiresHttpServer()
             ),
-                "webUI" to mapOf(
-                    "swagger" to "/swagger-ui/index.html",
-                    "actuator" to "/actuator",
-                    "prometheus" to "/actuator/prometheus",
-                    "grafana" to "http://localhost:3000"
-                )
+            "webUI" to mapOf(
+                "swagger" to "/swagger-ui/index.html",
+                "actuator" to "/actuator",
+                "prometheus" to "/actuator/prometheus",
+                "grafana" to "http://localhost:3000"
+            )
         )
     }
 
@@ -47,6 +51,72 @@ class StatusController(
     @Operation(summary = "Health check", description = "Simple health check endpoint")
     fun health(): Map<String, String> {
         return mapOf("status" to "UP")
+    }
+
+    @GetMapping("/config")
+    @Operation(summary = "Get MCP configuration", description = "Returns MCP configuration JSON for Cursor IDE based on current transport mode")
+    fun getMcpConfig(@RequestParam(required = false) transport: String?): Map<String, Any> {
+        logger.info { "MCP config requested for transport: $transport" }
+        val transportMode = transport?.lowercase() ?: mcpProperties.transport.lowercase()
+        val mcpPort = if (mcpProperties.requiresHttpServer()) mcpProperties.port else 8080
+        val containerName = "mcp-bsl-server-checker"
+
+        val mcpServers = when (transportMode) {
+            "stdio" -> mapOf(
+                "bsl-checker" to mapOf(
+                    "command" to "docker",
+                    "args" to listOf(
+                        "exec",
+                        "-i",
+                        containerName,
+                        "java",
+                        "-jar",
+                        "/app/app.jar"
+                    ),
+                    "env" to mapOf(
+                        "MCP_TRANSPORT" to "stdio",
+                        "LOGGING_ENABLED" to "false"
+                    ),
+                )
+            )
+            "http", "http-rest" -> mapOf(
+                "bsl-checker" to mapOf(
+                    "url" to "http://localhost:9090/mcp",
+                )
+            )
+            "sse" -> mapOf(
+                "bsl-checker" to mapOf(
+                    "url" to "http://localhost:9090/mcp",
+                )
+            )
+            "ndjson" -> mapOf(
+                "bsl-checker" to mapOf(
+                    "url" to "http://localhost:9090/mcp",
+                )
+            )
+            else -> mapOf(
+                "bsl-checker" to mapOf(
+                    "command" to "docker",
+                    "args" to listOf(
+                        "exec",
+                        "-i",
+                        containerName,
+                        "java",
+                        "-jar",
+                        "/app/app.jar"
+                    ),
+                    "env" to mapOf(
+                        "MCP_TRANSPORT" to "stdio",
+                        "LOGGING_ENABLED" to "false"
+                    ),
+                )
+            )
+        }
+
+        return mapOf(
+            "\$schema" to "https://modelcontextprotocol.io/schema/mcp-config.json",
+            "mcpServers" to mcpServers
+        )
     }
 }
 

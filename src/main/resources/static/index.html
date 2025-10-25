@@ -207,15 +207,6 @@
             font-size: 0.9em;
             color: #856404;
         }
-        select:hover {
-            border-color: #5568d3;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        select:focus {
-            outline: none;
-            border-color: #5568d3;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
         code {
             background: #e3e8ff;
             padding: 2px 6px;
@@ -284,28 +275,7 @@
         <div class="config-block">
             <h2>⚙️ Cursor IDE Configuration</h2>
             <div class="config-description">
-                Выберите режим подключения и скопируйте конфигурацию:
-            </div>
-            
-            <div style="margin: 20px 0;">
-                <label for="transport-mode" style="font-weight: 600; color: #333; display: block; margin-bottom: 10px;">
-                    Режим MCP транспорта:
-                </label>
-                <select id="transport-mode" onchange="updateConfigByMode()" style="
-                    width: 100%;
-                    padding: 12px 15px;
-                    font-size: 1em;
-                    border: 2px solid #667eea;
-                    border-radius: 8px;
-                    background: white;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">
-                    <option value="stdio">stdio - Для Cursor IDE</option>
-                    <option value="http">HTTP - REST API режим</option>
-                    <option value="sse">SSE - Streaming режим</option>
-                    <option value="ndjson">NDJSON - Потоковый JSON</option>
-                </select>
+                Конфигурация для текущего режима транспорта. Скопируйте конфигурацию ниже в настройки Cursor IDE:
             </div>
 
             <div id="mode-description" style="
@@ -316,17 +286,26 @@
                 margin-bottom: 20px;
                 font-size: 0.95em;
             ">
-                <strong>📌 stdio режим:</strong> Подключается к уже запущенному контейнеру через <code>docker exec</code>. 
-                Контейнер должен быть запущен в режиме HTTP (см. README).
+                <strong>📌 Загрузка информации о режиме...</strong>
             </div>
             
             <div class="config-code">
                 <button class="copy-btn" onclick="copyConfig()">📋 Copy</button>
                 <pre id="mcp-config">Loading...</pre>
             </div>
-            <div class="config-description" style="margin-top: 15px; font-size: 0.85em; color: #666;">
-                💡 Подробные инструкции: <a href="/README.md" style="color: #667eea;">README.md</a> | 
-                <a href="/docs/TRANSPORT_MODES.md" style="color: #667eea;">Режимы работы</a>
+            
+            <div id="docker-note" style="
+                margin-top: 20px;
+                padding: 15px;
+                background: #fff3cd;
+                border-left: 4px solid #ffc107;
+                border-radius: 6px;
+                font-size: 0.9em;
+                color: #856404;
+                display: none;
+            ">
+                <strong>🐳 Важно:</strong> Для HTTP/SSE/NDJSON режимов сервис должен быть запущен в Docker контейнере. 
+                Используйте <code>docker-compose up -d</code> или <code>docker run</code> с настройками из файла .env
             </div>
         </div>
 
@@ -347,143 +326,29 @@
             },
             http: {
                 title: '🌐 HTTP режим',
-                text: 'Прямое подключение к HTTP API. Контейнер должен быть запущен в режиме HTTP с портами 9090 и 8080.'
+                text: 'Упрощенное подключение к запущенному сервису. Требуется только URL. Все настройки в файле окружения (.env).'
+            },
+            'http-rest': {
+                title: '🌐 HTTP режим',
+                text: 'Упрощенное подключение к запущенному сервису. Требуется только URL. Все настройки в файле окружения (.env).'
             },
             sse: {
                 title: '📡 SSE режим',
-                text: 'Потоковое подключение через Server-Sent Events для real-time обновлений. Эндпоинт: <code>/api/stream/analyze/sse</code>'
+                text: 'Упрощенное потоковое подключение к запущенному сервису. Требуется только URL. Все настройки в файле окружения (.env).'
             },
             ndjson: {
                 title: '📦 NDJSON режим',
-                text: 'Потоковая передача данных через Newline-Delimited JSON. Эндпоинт: <code>/api/stream/analyze/ndjson</code>'
+                text: 'Упрощенная потоковая передача данных к запущенному сервису. Требуется только URL. Все настройки в файле окружения (.env).'
             }
         };
 
-        // Update config when user selects different mode
-        function updateConfigByMode() {
-            const selectedMode = document.getElementById('transport-mode').value;
-            updateModeDescription(selectedMode);
-            
-            if (serverData) {
-                currentConfig = generateMcpConfigForMode(selectedMode);
-                document.getElementById('mcp-config').textContent = currentConfig;
-            }
-        }
-
-        // Update description based on selected mode
+        // Update description based on current mode
         function updateModeDescription(mode) {
             const descBlock = document.getElementById('mode-description');
             const desc = modeDescriptions[mode] || modeDescriptions.stdio;
             descBlock.innerHTML = `<strong>${desc.title}:</strong> ${desc.text}`;
         }
 
-        // Generate MCP config for specific mode
-        function generateMcpConfigForMode(mode) {
-            const port = serverData?.mcp?.port || 8080;
-            const webUIPort = 9090;
-
-            let config = {};
-
-            if (mode === 'stdio') {
-                config = {
-                    "mcpServers": {
-                        "bsl-server-stdio": {
-                            "command": "docker",
-                            "args": [
-                                "exec",
-                                "-i",
-                                "mcp-bsl-server-checker",
-                                "java",
-                                "-jar",
-                                "/app/app.jar"
-                            ],
-                            "env": {
-                                "MCP_TRANSPORT": "stdio",
-                                "LOGGING_ENABLED": "false"
-                            },
-                            "disabled": false,
-                            "alwaysAllow": []
-                        }
-                    }
-                };
-            } else if (mode === 'http') {
-                config = {
-                    "mcpServers": {
-                        "bsl-server-http": {
-                            "command": "docker",
-                            "args": [
-                                "run",
-                                "--rm",
-                                "-d",
-                                "-p",
-                                `${webUIPort}:${webUIPort}`,
-                                "-p",
-                                `${port}:${port}`,
-                                "-v",
-                                "D:\\\\My Projects\\\\Projects 1C:/workspaces:ro",
-                                "--name",
-                                "mcp-bsl-server-checker",
-                                "mcp-bsl-server:latest"
-                            ],
-                            "env": {
-                                "MCP_TRANSPORT": "http",
-                                "MCP_PORT": port.toString(),
-                                "WEB_UI_PORT": webUIPort.toString(),
-                                "LOGGING_ENABLED": "true"
-                            },
-                            "disabled": false,
-                            "alwaysAllow": []
-                        }
-                    }
-                };
-            } else if (mode === 'sse') {
-                config = {
-                    "mcpServers": {
-                        "bsl-server-sse": {
-                            "command": "docker",
-                            "args": [
-                                "exec",
-                                "-i",
-                                "mcp-bsl-server-checker",
-                                "java",
-                                "-jar",
-                                "/app/app.jar"
-                            ],
-                            "env": {
-                                "MCP_TRANSPORT": "sse",
-                                "MCP_PORT": port.toString()
-                            },
-                            "disabled": true,
-                            "alwaysAllow": []
-                        }
-                    }
-                };
-            } else if (mode === 'ndjson') {
-                config = {
-                    "mcpServers": {
-                        "bsl-server-ndjson": {
-                            "command": "docker",
-                            "args": [
-                                "exec",
-                                "-i",
-                                "mcp-bsl-server-checker",
-                                "java",
-                                "-jar",
-                                "/app/app.jar"
-                            ],
-                            "env": {
-                                "MCP_TRANSPORT": "ndjson",
-                                "MCP_PORT": port.toString()
-                            },
-                            "disabled": true,
-                            "alwaysAllow": []
-                        }
-                    }
-                };
-            }
-
-            return JSON.stringify(config, null, 2);
-        }
 
         // Copy config to clipboard
         function copyConfig() {
@@ -503,28 +368,37 @@
                 });
         }
 
-        // Fetch and display server status
-        fetch('/status')
-            .then(response => response.json())
-            .then(data => {
-                serverData = data;
+        // Fetch and display server status and configuration
+        Promise.all([
+            fetch('/status').then(response => response.json()),
+            fetch('/status/config').then(response => response.json())
+        ])
+            .then(([statusData, configData]) => {
+                serverData = statusData;
                 
                 // Update status info
-                document.getElementById('transport').textContent = data.mcp?.transport || 'unknown';
-                document.getElementById('mcp-port').textContent = data.mcp?.port ? `${data.mcp.port} (http/sse/ndjson)` : 'N/A (stdio mode)';
-                document.getElementById('version').textContent = data.version || 'unknown';
+                document.getElementById('transport').textContent = statusData.mcp?.transport || 'unknown';
+                document.getElementById('mcp-port').textContent = statusData.mcp?.port ? `${statusData.mcp.port} (http/sse/ndjson)` : 'N/A (stdio mode)';
+                document.getElementById('version').textContent = statusData.version || 'unknown';
 
-                // Set default selected mode
-                const defaultMode = 'http';
-                document.getElementById('transport-mode').value = defaultMode;
-                updateModeDescription(defaultMode);
+                // Update description for current transport mode
+                const currentTransport = statusData.mcp?.transport || 'stdio';
+                updateModeDescription(currentTransport);
 
-                // Generate and display MCP config for default mode
-                currentConfig = generateMcpConfigForMode(defaultMode);
+                // Show Docker note for simplified modes
+                const dockerNote = document.getElementById('docker-note');
+                if (['http', 'http-rest', 'sse', 'ndjson'].includes(currentTransport)) {
+                    dockerNote.style.display = 'block';
+                } else {
+                    dockerNote.style.display = 'none';
+                }
+
+                // Display the current MCP configuration
+                currentConfig = JSON.stringify(configData, null, 2);
                 document.getElementById('mcp-config').textContent = currentConfig;
             })
             .catch(err => {
-                console.error('Failed to fetch status:', err);
+                console.error('Failed to fetch status or config:', err);
                 document.getElementById('transport').textContent = 'Error loading';
                 document.getElementById('mcp-port').textContent = 'Error loading';
                 document.getElementById('version').textContent = 'Error loading';
