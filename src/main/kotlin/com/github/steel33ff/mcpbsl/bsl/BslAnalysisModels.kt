@@ -9,14 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class BslAnalysisOutput(
-    @JsonProperty("summary")
-    val summary: BslAnalysisSummary?,
+    @JsonProperty("date")
+    val date: String?,
     
-    @JsonProperty("diagnostics")
-    val diagnostics: List<BslDiagnostic>? = emptyList(),
+    @JsonProperty("fileinfos")
+    val fileinfos: List<BslFileInfo>? = emptyList(),
     
-    @JsonProperty("files")
-    val files: List<BslFileAnalysis>? = emptyList()
+    @JsonProperty("sourceDir")
+    val sourceDir: String?
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,26 +36,32 @@ data class BslAnalysisSummary(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class BslDiagnostic(
-    @JsonProperty("file")
-    val file: String,
-    
-    @JsonProperty("line")
-    val line: Int,
-    
-    @JsonProperty("column")
-    val column: Int = 0,
-    
-    @JsonProperty("code")
-    val code: String,
+    @JsonProperty("range")
+    val range: BslRange? = null,
     
     @JsonProperty("severity")
     val severity: String,
     
+    @JsonProperty("code")
+    val code: String,
+    
+    @JsonProperty("codeDescription")
+    val codeDescription: BslCodeDescription? = null,
+    
+    @JsonProperty("source")
+    val source: String? = null,
+    
     @JsonProperty("message")
     val message: String,
     
-    @JsonProperty("range")
-    val range: BslRange? = null
+    @JsonProperty("tags")
+    val tags: List<String>? = null,
+    
+    @JsonProperty("relatedInformation")
+    val relatedInformation: Any? = null,
+    
+    @JsonProperty("data")
+    val data: Any? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -74,6 +80,54 @@ data class BslPosition(
     
     @JsonProperty("character")
     val character: Int
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class BslCodeDescription(
+    @JsonProperty("href")
+    val href: String? = null
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class BslFileInfo(
+    @JsonProperty("path")
+    val path: String,
+    
+    @JsonProperty("mdoRef")
+    val mdoRef: String?,
+    
+    @JsonProperty("diagnostics")
+    val diagnostics: List<BslDiagnostic>? = emptyList(),
+    
+    @JsonProperty("metrics")
+    val metrics: BslFileMetrics? = null
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class BslFileMetrics(
+    @JsonProperty("procedures")
+    val procedures: Int = 0,
+    
+    @JsonProperty("functions")
+    val functions: Int = 0,
+    
+    @JsonProperty("lines")
+    val lines: Int = 0,
+    
+    @JsonProperty("ncloc")
+    val ncloc: Int = 0,
+    
+    @JsonProperty("comments")
+    val comments: Int = 0,
+    
+    @JsonProperty("statements")
+    val statements: Int = 0,
+    
+    @JsonProperty("cognitiveComplexity")
+    val cognitiveComplexity: Int = 0,
+    
+    @JsonProperty("cyclomaticComplexity")
+    val cyclomaticComplexity: Int = 0
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -63,7 +63,26 @@ class BslCliService(
 
             if (result.isSuccess) {
                 logger.info { "Analysis completed successfully" }
-                AnalyzeResult.success(outputParser.parseAnalysisOutput(result.output))
+                
+                // Try to read JSON from output file first
+                val jsonOutput = try {
+                    val jsonFile = tempOutputDir.resolve("bsl-json.json")
+                    logger.debug { "Checking for JSON file: $jsonFile" }
+                    if (jsonFile.toFile().exists()) {
+                        val content = jsonFile.toFile().readText()
+                        logger.info { "Successfully read JSON file, size: ${content.length} chars" }
+                        content
+                    } else {
+                        logger.warn { "JSON file does not exist: $jsonFile" }
+                        null
+                    }
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to read JSON output file" }
+                    null
+                }
+                
+                val outputToParse = jsonOutput ?: result.output
+                AnalyzeResult.success(outputParser.parseAnalysisOutput(outputToParse))
             } else {
                 logger.error { "Analysis failed: ${result.output}" }
                 AnalyzeResult.failure(result.output)

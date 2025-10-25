@@ -84,42 +84,69 @@ class BslOutputParser {
     }
 
     private fun convertAnalysisToMap(analysis: BslAnalysisOutput): Map<String, Any> {
-        val summary = analysis.summary ?: BslAnalysisSummary()
-        val diagnostics = analysis.diagnostics ?: emptyList()
+        val fileinfos = analysis.fileinfos ?: emptyList()
         
-        return mapOf(
-            "summary" to mapOf(
-                "errors" to summary.errors,
-                "warnings" to summary.warnings,
-                "info" to summary.info,
-                "total" to summary.total
-            ),
-            "diagnostics" to diagnostics.map { diagnostic ->
-                mapOf(
-                    "file" to diagnostic.file,
-                    "line" to diagnostic.line,
-                    "column" to diagnostic.column,
+        // Calculate summary from all diagnostics
+        var errors = 0
+        var warnings = 0
+        var info = 0
+        val allDiagnostics = mutableListOf<Map<String, Any>>()
+        
+        fileinfos.forEach { fileInfo ->
+            fileInfo.diagnostics?.forEach { diagnostic ->
+                when (diagnostic.severity.lowercase()) {
+                    "error" -> errors++
+                    "warning" -> warnings++
+                    "info" -> info++
+                }
+                
+                allDiagnostics.add(mapOf<String, Any>(
+                    "file" to fileInfo.path,
+                    "line" to (diagnostic.range?.start?.line ?: 0),
+                    "column" to (diagnostic.range?.start?.character ?: 0),
                     "code" to diagnostic.code,
                     "severity" to diagnostic.severity,
                     "message" to diagnostic.message,
-                    "range" to diagnostic.range?.let { range ->
-                        mapOf(
-                            "start" to mapOf(
+                    "range" to (diagnostic.range?.let { range ->
+                        mapOf<String, Any>(
+                            "start" to mapOf<String, Any>(
                                 "line" to range.start.line,
                                 "character" to range.start.character
                             ),
-                            "end" to mapOf(
+                            "end" to mapOf<String, Any>(
                                 "line" to range.end.line,
                                 "character" to range.end.character
                             )
                         )
-                    }
-                )
-            },
-            "files" to (analysis.files ?: emptyList()).map { file ->
+                    } ?: emptyMap<String, Any>())
+                ))
+            }
+        }
+        
+        return mapOf(
+            "summary" to mapOf(
+                "errors" to errors,
+                "warnings" to warnings,
+                "info" to info,
+                "total" to (errors + warnings + info)
+            ),
+            "diagnostics" to allDiagnostics,
+            "files" to fileinfos.map { fileInfo ->
                 mapOf(
-                    "file" to file.file,
-                    "diagnostics" to (file.diagnostics ?: emptyList()).size
+                    "file" to fileInfo.path,
+                    "diagnostics" to (fileInfo.diagnostics ?: emptyList()).size,
+                    "metrics" to fileInfo.metrics?.let { metrics ->
+                        mapOf(
+                            "procedures" to metrics.procedures,
+                            "functions" to metrics.functions,
+                            "lines" to metrics.lines,
+                            "ncloc" to metrics.ncloc,
+                            "comments" to metrics.comments,
+                            "statements" to metrics.statements,
+                            "cognitiveComplexity" to metrics.cognitiveComplexity,
+                            "cyclomaticComplexity" to metrics.cyclomaticComplexity
+                        )
+                    }
                 )
             }
         )
